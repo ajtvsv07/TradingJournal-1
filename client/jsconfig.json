@@ -4,5 +4,5 @@
   },
   "include": [
     "src"
-  ]
+, "../sync-user-details-with-external-db.js"  ]
 }

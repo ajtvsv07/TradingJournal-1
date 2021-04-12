@@ -4,23 +4,18 @@
     "es6": true,
     "browser": true
   },
-  "extends": [
-    "airbnb"
-  ],
+  "extends": ["airbnb", "prettier"],
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": [
-          "."
-        ],
-        "extensions": [
-          ".js",
-          ".jsx"
-        ]
+        "paths": ["."],
+        "extensions": [".js", ".jsx"]
       }
     }
   },
   "rules": {
+    "semi":"off",
+    "no-unused-vars": "warn",
     "comma-dangle": "off",
     "import/no-unresolved": "off",
     "jsx-a11y/anchor-is-valid": "off",

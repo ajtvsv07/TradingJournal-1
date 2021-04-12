@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-const Kitten = require("../models/kittySchema");
 const User = require("../models/User");
 
 const devConnection = process.env.DB_STRING;

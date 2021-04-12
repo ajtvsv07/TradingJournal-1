@@ -22,4 +22,7 @@ router.use("/protected", protectedResource);
 //Checks Authentication
 router.use("/auth", authenticated);
 
+//Send link details to auth0
+router.use("/api", authenticated);
+
 module.exports = router;

@@ -108,3 +108,4 @@ dist
 # *.properties
 private_key.pem
 public_key.pem
+sync-user-details-with-external-db.js
