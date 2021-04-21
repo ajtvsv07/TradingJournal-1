@@ -1,21 +1,27 @@
 require("dotenv").config();
-const fs = require("fs");
 const path = require("path");
 const express = require("express");
-const passport = require("passport");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
+const jwt = require("express-jwt");
+const jwks = require("jwks-rsa");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const pathToKey = path.join(__dirname, "private_key.pem");
-const PRIV_KEY = fs.readFileSync(pathToKey, "utf8");
 
-require("./config/database");
+const jwtCheck = jwt({
+  secret: jwks.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: "https://dev-deltanorth46.auth0.com/.well-known/jwks.json",
+  }),
+  audience: "http://localhost:5000", // API identifier - checks that incoming requests also match this audience
+  issuer: "https://dev-deltanorth46.auth0.com/",
+  algorithms: ["RS256"],
+});
 
-app.use(cookieParser(PRIV_KEY));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// require("./config/database");
+
 app.use(
   cors({
     origin: true,
@@ -23,11 +29,13 @@ app.use(
   })
 );
 
-require("./passport/authenticateJWT")(passport);
-app.use(passport.initialize());
+//Protects all of the routes
+app.use(jwtCheck);
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use("/", require("./routes/index"));
 
 app.use(express.static(path.join(__dirname, "/client/public")));
 
-app.use("/", require("./routes/index"));
-
-app.listen(PORT, () => console.log(`Server up and running on port ${PORT} !`));
+app.listen(PORT, () => console.log(`Server up and running on port ${PORT}!`));

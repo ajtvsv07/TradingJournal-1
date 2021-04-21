@@ -1,7 +1,5 @@
 import * as React from "react";
 import {
-  List,
-  ListItemText,
   Card,
   CardContent,
   CardHeader,
@@ -26,8 +24,6 @@ export default function SettingsNotifications(props) {
   const [state, setState] = React.useState({
     linkAccount: false,
   });
-
-  console.log("Auth0 User Profile: ", user);
 
   const handleChange = (event) => {
     setState({ ...state, [event.target.name]: event.target.checked });
@@ -57,13 +53,6 @@ export default function SettingsNotifications(props) {
               <Typography color="text-primary" variant="h4">
                 User Account Details
               </Typography>
-              <List>
-                {Object.entries(user).map(([key, value]) => (
-                  <ListItemText key={key}>
-                    {key}: {value}
-                  </ListItemText>
-                ))}
-              </List>
               <FormControlLabel
                 control={
                   <Switch
