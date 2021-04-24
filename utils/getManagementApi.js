@@ -22,6 +22,7 @@ const getManagementApi = () => {
           grant_type: grant_type,
         },
       });
+      // console.log("Response: ", response.data);
       resolve(response);
     } catch (error) {
       reject(error);

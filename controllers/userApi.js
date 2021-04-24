@@ -3,16 +3,24 @@ const router = express.Router();
 const axios = require("axios");
 const getManagementApi = require("../utils/getManagementApi");
 
-router.patch("/updateAccount", (req, res, next) => {
-  console.log("Incoming request: ", req.body.data);
-
+router.post("/updateAccount", (req, res, next) => {
   getManagementApi()
     .then((response) => {
       const payload = req.body.data;
       const token = response.data;
-      console.log("Req payload from client: ", payload);
+      // console.log("Req payload: ", payload);
 
-      function updateUsername() {
+      // reqFeedback: 'Success, your user details have been updated.',
+      // loading: false,
+      // firstName: 'Daniel',
+      // lastName: 'Lopez',
+      // email: 'tgdpez@hotmail.com',
+      // username: 'tgdpez',
+      // id: 'auth0|6081dc0bfcccc40069c90dff',
+      // newEmail: false
+    
+
+      function updateUser() {
         return axios({
           method: "PATCH",
           url: `${process.env.MANAGEMENT_API_AUDIENCE}users/${payload.id}`,
@@ -24,19 +32,10 @@ router.patch("/updateAccount", (req, res, next) => {
             username: payload.username,
             name: payload.username,
           },
-        })
-          .then(function (response) {
-            console.log("Update username attempt: ", response);
-          })
-          .catch(function (err) {
-            console.log({
-              errorMessage: err.message,
-              errorResponse: err.response,
-            });
-          });
+        });
       }
 
-      function updateUserEmail() {
+      function otherDetails() {
         return axios({
           method: "PATCH",
           url: `${process.env.MANAGEMENT_API_AUDIENCE}users/${payload.id}`,
@@ -45,66 +44,70 @@ router.patch("/updateAccount", (req, res, next) => {
             "content-type": "application/json",
           },
           data: {
-            email: payload.email
-          },
-        })
-          .then(function (response) {
-            console.log("Email update attempted: ", response);
-          })
-          .catch(function (err) {
-            console.log({
-              errorMessage: err.message,
-              errorResponse: err.response,
-            });
-          });
-      }
-
-      function udpateUserMetadata() {
-        return axios({
-          method: "PATCH",
-          url: `${process.env.MANAGEMENT_API_AUDIENCE}users/${payload.id}`,
-          headers: {
-            authorization: `${token.token_type} ${token.access_token}`,
-            "content-type": "application/json",
-          },
-          data: {
+            email: payload.email,
             user_metadata: {
+              emailVerificationSent: payload.newEmail,
               firstName: payload.firstName,
               lastName: payload.lastName,
             },
           },
-        })
-          .then(function (response) {
-            console.log("Update user metadata attempt: ",response);
-          })
-          .catch(function (err) {
-            console.log({
-              errorMessage: err.message,
-              errorResponse: err.response,
-            });
+        });
+      }
+
+      function sendEmailVerification() {
+          return axios({
+            method: "POST",
+            url: `${process.env.MANAGEMENT_API_AUDIENCE}jobs/verification-email`,
+            headers: {
+              authorization: `${token.token_type} ${token.access_token}`,
+              "content-type": "application/json",
+            },
+            data: {
+              user_id: payload.id,
+            },
           });
       }
 
-      Promise.all([
-        updateUsername(),
-        updateUserEmail(),
-        udpateUserMetadata(),
-      ]).then(function (results) {
-        const username = results[0];
-        const email = results[1];
-        const metadata = results[2];
-        res.json({
-          message: "Success, promises were fulfilled",
-          username: username,
-          email: email,
-          metadata: metadata,
-        });
-      });
+      // TODO: find a way to execute "sendEmailVerification", only after the other promises have finished
 
-      // call management api to update user details
+      const handlePromises = ()=>{
+        console.log("New email?: ", payload.newEmail);
+        if (payload.newEmail) {
+          return Promise.all([updateUser(), otherDetails(), sendEmailVerification()])
+        }else{
+          return Promise.all([updateUser(), otherDetails()]);
+        }
+      }
+
+      handlePromises()
+        .then(function (results) {
+          const user = results[0].data;
+          const otherDetails = results[1].data;
+
+          res.json({
+            success: true,
+            message: "Success, your user details have been updated.",
+            username: user.username,
+            email: otherDetails.email,
+            metadata: otherDetails.user_metadata,
+          });
+        })
+        .catch((error) => {
+          console.log(error.response.data);
+          res.json({
+            success: false,
+            message: "There was an error with the promise requests",
+            error: error.response.data,
+          });
+        });
     })
     .catch(function (error) {
-      console.log("Error in getting the Auth0 auth token", error);
+      console.log("Error in getting the Auth0 auth token", error.data);
+      res.json({
+        success: false,
+        message: "Error in getting the Auth0 auth token",
+        error: error.data,
+      });
       next();
     });
 });

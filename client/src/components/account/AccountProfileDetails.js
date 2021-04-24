@@ -14,8 +14,9 @@ import {
   Typography,
   FormControlLabel,
   Switch,
+  CircularProgress,
 } from "@material-ui/core";
-// import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import NotInterestedIcon from "@material-ui/icons/NotInterested";
 import PropTypes from "prop-types";
@@ -23,60 +24,60 @@ import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import useApi from "../../utils/useApi";
 
-// const useStyles = makeStyles((theme) => ({
-//   avatarSize: {
-//     width: theme.spacing(15),
-//     height: theme.spacing(15),
-//   },
-//   avatarButton: {
-//     marginLeft: theme.spacing(4),
-//     textAlign: "left"
-//   },
-// }));
-// const classes = useStyles();
+const useStyles = makeStyles((theme) => ({
+  spinner: {
+    display: "flex",
+    "& > * + *": {
+      marginLeft: theme.spacing(1),
+    },
+    color: "#ffffff",
+  },
+}));
 
 const apiDetails = "";
 
-// TODO: Remember to add the creation of the firstname and lastname
-// to the hook that also creates the default metadata with the preferences
-
 // TODO: Look into re-sending email confirmation after user updates their email addresss
 
-// TODO: Changes don't take effect right after udpate, instead, only once page is reloaded, 
-// user is logged out and asked to re-authenticate. Would be a better user experience if it happened automatically
+// TODO: Fix loading spinner size in button. Currently button changes size
 
 const AccountProfileDetails = ({ ...rest }) => {
+  const classes = useStyles();
 
-  const {
-    user,
-    isAuthenticated,
-    getAccessTokenSilently,
-    isLoading,
-  } = useAuth0();
-  
-  console.log("User object: ", user);
-  
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+  console.log("User object", user);
+
   const [userDetails, setUserDetails] = useState({
-    firstName: user["https://tradingjournal/first_name"],
-    lastName: user["https://tradingjournal/last_name"],
+    reqFeedback: false,
+    loading: false,
+    firstName: user["https://tradingjournal/first-name"],
+    lastName: user["https://tradingjournal/last-name"],
     email: user.email,
+    emailVerificationSent: true,
+
     username: user["https://tradingjournal/username"],
     id: user.sub,
-  });
-
-  const [isLinked, setIsLinked] = useState({
-    linkAccount: user["https://tradingjournal/link_account"]
+    linkAccount: user["https://tradingjournal/link_account"],
   });
 
   const callServerApi = (event) => {
     event.preventDefault();
-    console.log("Logging current state before sending the server request: ", userDetails);
+    setUserDetails({ ...userDetails, loading: true });
+
+    let emailChanged = false;
+    if (userDetails.email !== user.email) {
+      emailChanged = true;
+    }
+
     getAccessTokenSilently().then((token) => {
       axios
-        .patch(
+        .post(
           "http://localhost:5000/user/updateAccount",
           {
-            data: userDetails,
+            data: {
+              ...userDetails,
+              newEmail: emailChanged,
+            },
           },
           {
             headers: {
@@ -85,7 +86,20 @@ const AccountProfileDetails = ({ ...rest }) => {
           }
         )
         .then((response) => {
-          console.log(response);
+          console.log("Patch response: ", response);
+          return response.data.success
+            ? getAccessTokenSilently({ ignoreCache: true }).then(() => {
+                setUserDetails(() => ({
+                  ...userDetails,
+                  reqFeedback: response.data.message,
+                  loading: false,
+                }));
+              })
+            : setUserDetails(() => ({
+                ...userDetails,
+                reqFeedback: response.data.error.message,
+                loading: false,
+              }));
         })
         .catch((error) => {
           console.log(error);
@@ -100,15 +114,18 @@ const AccountProfileDetails = ({ ...rest }) => {
     });
   };
 
-  const handleLinkAccountChange = ()=>{
+  const handleLinkAccountChange = () => {
     const previousSetting = user["https://tradingjournal/link_account"];
-    console.log("isLinked setting was: ", previousSetting)
+    console.log("isLinked setting was: ", previousSetting);
     // TODO: want to set this option to the opposite of what it was previously
-    setIsLinked((previousLinkSetting) => !previousLinkSetting);
-    setTimeout(()=>{
-      console.log("The new isLinked value is: ", isLinked)
+    setUserDetails(() => ({
+      ...userDetails,
+      linkAccount: !previousSetting,
+    }));
+    setTimeout(() => {
+      console.log("The new isLinked value is: ", userDetails.linkAccount);
     }, 1000);
-  }
+  };
 
   return (
     isAuthenticated && (
@@ -121,30 +138,28 @@ const AccountProfileDetails = ({ ...rest }) => {
             />
             <Divider />
             <CardContent>
-              <Grid container spacing={3}>
-                <Grid item md={6} xs={12}>
+              <Grid container spacing={5}>
+                <Grid item md={6} xs={12} pt={5}>
                   <TextField
                     fullWidth
                     label="First name"
                     name="firstName"
                     onChange={handleUserDetailsChange}
-                    required
                     value={userDetails.firstName}
                     variant="outlined"
                   />
                 </Grid>
-                <Grid item md={6} xs={12}>
+                <Grid item md={6} xs={12} pt={5}>
                   <TextField
                     fullWidth
                     label="Last name"
                     name="lastName"
                     onChange={handleUserDetailsChange}
-                    required
                     value={userDetails.lastName}
                     variant="outlined"
                   />
                 </Grid>
-                <Grid item md={6} xs={12}>
+                <Grid item md={6} xs={12} pt={5}>
                   <TextField
                     fullWidth
                     label="Email Address"
@@ -155,7 +170,7 @@ const AccountProfileDetails = ({ ...rest }) => {
                     variant="outlined"
                   />
                 </Grid>
-                <Grid item md={6} xs={12}>
+                <Grid item md={6} xs={12} pt={5}>
                   <TextField
                     fullWidth
                     label="Username"
@@ -166,21 +181,40 @@ const AccountProfileDetails = ({ ...rest }) => {
                     variant="outlined"
                   />
                 </Grid>
-                <Grid item md={6} xs={12}>
+              </Grid>
+              <Grid
+                container
+                spacing={5}
+                direction="row"
+                justify="flex-start"
+                alignItems="center"
+                pt={5}
+              >
+                <Grid item>
                   <Chip
                     label={
-                      user.emailVerified
+                      user.email_verified
                         ? "Email Verified: Yes"
                         : "Email Verified: No"
                     }
                     icon={
-                      user.emailVerified ? (
+                      user.email_verified ? (
                         <CheckCircleIcon />
                       ) : (
                         <NotInterestedIcon />
                       )
                     }
                   />
+                </Grid>
+                <Grid item>
+                  {!user.email_verified && userDetails.emailVerificationSent ? (
+                    <Typography>
+                      Email Verification has been sent. Please check your email
+                      and verify
+                    </Typography>
+                  ) : (
+                    ""
+                  )}
                 </Grid>
               </Grid>
             </CardContent>
@@ -189,15 +223,33 @@ const AccountProfileDetails = ({ ...rest }) => {
               sx={{
                 display: "flex",
                 justifyContent: "flex-end",
+                p: 5,
+              }}
+            >
+              <Grid container spacing={5}>
+                <Grid item md={8} xs={12}>
+                  {userDetails.reqFeedback ? (
+                    <Typography>{userDetails.reqFeedback}</Typography>
+                  ) : (
+                    ""
+                  )}
+                </Grid>
+              </Grid>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
                 p: 2,
               }}
             >
               <Button color="primary" variant="contained" type="submit">
-                Save details
+                {userDetails.loading ? (
+                  <CircularProgress className={classes.spinner} />
+                ) : (
+                  "Save details"
+                )}
               </Button>
-              {isLoading ? (
-                <Typography>Loading...</Typography>
-              ): ""}
             </Box>
           </Card>
         </form>
@@ -227,14 +279,14 @@ const AccountProfileDetails = ({ ...rest }) => {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={isLinked.linkAccount}
+                        checked={userDetails.linkAccount}
                         onChange={handleLinkAccountChange}
                         name="linkAccount"
                         color="primary"
                       />
                     }
                     label={
-                      isLinked.linkAccount ? (
+                      userDetails.linkAccount ? (
                         <div>
                           <h3>ON</h3>
                           <Typography color="textPrimary" variant="h5">
