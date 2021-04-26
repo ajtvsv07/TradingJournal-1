@@ -19,10 +19,8 @@ import {
 import { makeStyles } from "@material-ui/core/styles";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import NotInterestedIcon from "@material-ui/icons/NotInterested";
-import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
-import useApi from "../../utils/useApi";
 
 const useStyles = makeStyles((theme) => ({
   spinner: {
@@ -36,16 +34,12 @@ const useStyles = makeStyles((theme) => ({
 
 const apiDetails = "";
 
-// TODO: Look into re-sending email confirmation after user updates their email addresss
 
 // TODO: Fix loading spinner size in button. Currently button changes size
 
 const AccountProfileDetails = ({ ...rest }) => {
   const classes = useStyles();
-
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
-
-  console.log("User object", user);
 
   const [userDetails, setUserDetails] = useState({
     reqFeedback: false,
@@ -54,7 +48,6 @@ const AccountProfileDetails = ({ ...rest }) => {
     lastName: user["https://tradingjournal/last-name"],
     email: user.email,
     emailVerificationSent: true,
-
     username: user["https://tradingjournal/username"],
     id: user.sub,
     linkAccount: user["https://tradingjournal/link_account"],
@@ -85,9 +78,9 @@ const AccountProfileDetails = ({ ...rest }) => {
             },
           }
         )
-        .then((response) => {
-          console.log("Patch response: ", response);
-          return response.data.success
+        .then((response) =>
+          // console.log("POST response: ", response);
+          response.data.success
             ? getAccessTokenSilently({ ignoreCache: true }).then(() => {
                 setUserDetails(() => ({
                   ...userDetails,
@@ -99,12 +92,13 @@ const AccountProfileDetails = ({ ...rest }) => {
                 ...userDetails,
                 reqFeedback: response.data.error.message,
                 loading: false,
-              }));
-        })
+              }))
+        )
         .catch((error) => {
           console.log(error);
         });
     });
+
   };
 
   const handleUserDetailsChange = (event) => {
@@ -115,15 +109,13 @@ const AccountProfileDetails = ({ ...rest }) => {
   };
 
   const handleLinkAccountChange = () => {
-    const previousSetting = user["https://tradingjournal/link_account"];
-    console.log("isLinked setting was: ", previousSetting);
+
+    console.log("isLinked setting was: ", userDetails.linkAccount);
     // TODO: want to set this option to the opposite of what it was previously
-    setUserDetails(() => ({
-      ...userDetails,
-      linkAccount: !previousSetting,
-    }));
+    setUserDetails(userDetails.linkAccount => !userDetails.linkAccount);
     setTimeout(() => {
       console.log("The new isLinked value is: ", userDetails.linkAccount);
+      console.log("The user details object is now: ", userDetails);
     }, 1000);
   };
 
@@ -347,11 +339,6 @@ const AccountProfileDetails = ({ ...rest }) => {
       </>
     )
   );
-};
-
-AccountProfileDetails.propTypes = {
-  user: PropTypes.object,
-  button: PropTypes.any,
 };
 
 export default AccountProfileDetails;
