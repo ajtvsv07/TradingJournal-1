@@ -8,11 +8,11 @@ import App from "./App";
 ReactDOM.render(
   <React.StrictMode>
     <Auth0Provider
-      domain="dev-deltanorth46.auth0.com"
-      clientId="8xQPY1YK4ZwYwjnp0lrvkNny0zQSCZg1"
+      domain={process.env.REACT_APP_AUTH0_DOMAIN}
+      clientId={process.env.REACT_APP_AUTH0_CLIENT_ID}
       redirectUri={window.location.origin}
-      audience="http://localhost:5000"
-      scope="read:current_user update:current_user_metadata"
+      audience={process.env.REACT_APP_AUTH0_AUDIENCE}
+      scope={process.env.REACT_APP_SCOPE}
       useRefreshTokens="true"
     >
       <BrowserRouter>

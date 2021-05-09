@@ -1,28 +1,27 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Chip,
-  List,
-  ListItemText,
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  Divider,
-  Grid,
-  TextField,
-  Typography,
-  FormControlLabel,
-  Switch,
-  CircularProgress,
-} from "@material-ui/core";
+
+import Typography from "@material-ui/core/Typography";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import TextField from "@material-ui/core/TextField";
+import Grid from "@material-ui/core/Grid";
+import Divider from "@material-ui/core/Divider";
+import CardHeader from "@material-ui/core/CardHeader";
+import CardContent from "@material-ui/core/CardContent";
+import Card from "@material-ui/core/Card";
+import Box from "@material-ui/core/Box";
+import Chip from "@material-ui/core/Chip";
+import Button from "@material-ui/core/Button";
 import { makeStyles } from "@material-ui/core/styles";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import NotInterestedIcon from "@material-ui/icons/NotInterested";
-import { useAuth0 } from "@auth0/auth0-react";
+
 import axios from "axios";
 
+import { useAuth0 } from "@auth0/auth0-react";
+import LinkTdAccount from "./LinkTdAccount";
+
 const useStyles = makeStyles((theme) => ({
+  // TODO: Fix loading spinner size in button. Currently button changes size
   spinner: {
     display: "flex",
     "& > * + *": {
@@ -32,14 +31,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const apiDetails = "";
-
-
-// TODO: Fix loading spinner size in button. Currently button changes size
-
-const AccountProfileDetails = ({ ...rest }) => {
-  const classes = useStyles();
+const AccountProfileDetails = () => {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const classes = useStyles();
+
+  // TODO: figure out how to display a success or failure message only when user redirects from the 
+  // link-account set up page
+
+  console.log("User object: ", user);
 
   const [userDetails, setUserDetails] = useState({
     reqFeedback: false,
@@ -50,7 +49,6 @@ const AccountProfileDetails = ({ ...rest }) => {
     emailVerificationSent: true,
     username: user["https://tradingjournal/username"],
     id: user.sub,
-    linkAccount: user["https://tradingjournal/link_account"],
   });
 
   const callServerApi = (event) => {
@@ -65,7 +63,7 @@ const AccountProfileDetails = ({ ...rest }) => {
     getAccessTokenSilently().then((token) => {
       axios
         .post(
-          "http://localhost:5000/user/updateAccount",
+          `${process.env.REACT_APP_EXPRESS_API}/account/updateUserDetails`,
           {
             data: {
               ...userDetails,
@@ -98,7 +96,6 @@ const AccountProfileDetails = ({ ...rest }) => {
           console.log(error);
         });
     });
-
   };
 
   const handleUserDetailsChange = (event) => {
@@ -108,21 +105,10 @@ const AccountProfileDetails = ({ ...rest }) => {
     });
   };
 
-  const handleLinkAccountChange = () => {
-
-    console.log("isLinked setting was: ", userDetails.linkAccount);
-    // TODO: want to set this option to the opposite of what it was previously
-    setUserDetails(userDetails.linkAccount => !userDetails.linkAccount);
-    setTimeout(() => {
-      console.log("The new isLinked value is: ", userDetails.linkAccount);
-      console.log("The user details object is now: ", userDetails);
-    }, 1000);
-  };
-
   return (
     isAuthenticated && (
       <>
-        <form autoComplete="off" {...rest} onSubmit={callServerApi}>
+        <Box mb={10}>
           <Card>
             <CardHeader
               subheader="The information can be edited"
@@ -210,24 +196,15 @@ const AccountProfileDetails = ({ ...rest }) => {
                 </Grid>
               </Grid>
             </CardContent>
-            <Divider />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                p: 5,
-              }}
-            >
-              <Grid container spacing={5}>
-                <Grid item md={8} xs={12}>
-                  {userDetails.reqFeedback ? (
-                    <Typography>{userDetails.reqFeedback}</Typography>
-                  ) : (
-                    ""
-                  )}
-                </Grid>
+            <Grid container spacing={5}>
+              <Grid item md={8} xs={12}>
+                {userDetails.reqFeedback ? (
+                  <Typography>{userDetails.reqFeedback}</Typography>
+                ) : (
+                  ""
+                )}
               </Grid>
-            </Box>
+            </Grid>
             <Box
               sx={{
                 display: "flex",
@@ -235,7 +212,11 @@ const AccountProfileDetails = ({ ...rest }) => {
                 p: 2,
               }}
             >
-              <Button color="primary" variant="contained" type="submit">
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={callServerApi}
+              >
                 {userDetails.loading ? (
                   <CircularProgress className={classes.spinner} />
                 ) : (
@@ -244,98 +225,8 @@ const AccountProfileDetails = ({ ...rest }) => {
               </Button>
             </Box>
           </Card>
-        </form>
-        <Box mb={10} />
-        <form autoComplete="off" noValidate {...rest}>
-          <Card>
-            <CardHeader
-              subheader="Manage your connection to TD Ameritrade in order to automatically sync your trades"
-              title="Connect to TD Ameritrade"
-            />
-            <Divider />
-            <CardContent>
-              <Grid container spacing={6} wrap="wrap">
-                <Grid
-                  item
-                  md={12}
-                  sm={6}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                  xs={12}
-                >
-                  <Typography color="text-primary" variant="h4">
-                    User Account Details
-                  </Typography>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={userDetails.linkAccount}
-                        onChange={handleLinkAccountChange}
-                        name="linkAccount"
-                        color="primary"
-                      />
-                    }
-                    label={
-                      userDetails.linkAccount ? (
-                        <div>
-                          <h3>ON</h3>
-                          <Typography color="textPrimary" variant="h5">
-                            I want to reap the benefits of automatic syncing.
-                          </Typography>
-                        </div>
-                      ) : (
-                        <div>
-                          <h3>OFF</h3>
-                          <Typography color="textPrimary" variant="h5">
-                            I don&apos;t want to sync my trades.
-                          </Typography>
-                        </div>
-                      )
-                    }
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </form>
-        <Box mb={10} />
-        <Card>
-          <CardHeader title="Test API" />
-          <Divider />
-          <CardContent>
-            <Grid container spacing={6} wrap="wrap">
-              <Grid
-                item
-                md={12}
-                sm={6}
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-                xs={12}
-              >
-                <Typography color="text-primary" variant="h4">
-                  API Details should display here:
-                </Typography>
-                <Box>
-                  {apiDetails ? (
-                    Object.entries(apiDetails).map((item) => (
-                      <Typography>{item}</Typography>
-                    ))
-                  ) : (
-                    <Typography>Nothing to show here yet</Typography>
-                  )}
-                </Box>
-                <Box mt={4} />
-                <Button variant="contained" onClick={callServerApi}>
-                  Call server api
-                </Button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+        </Box>
+        <LinkTdAccount/>
       </>
     )
   );

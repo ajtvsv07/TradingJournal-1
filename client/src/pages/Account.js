@@ -7,7 +7,7 @@ const Account = () => (
 
   <>
     <Helmet>
-      <title>Account | Material Kit</title>
+      <title>Account | Trading Journal</title>
     </Helmet>
     <Box
       sx={{

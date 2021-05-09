@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const getManagementApi = require("../utils/getManagementApi");
 
-router.post("/updateAccount", (req, res, next) => {
+router.post("/updateUserDetails", (req, res, next) => {
   getManagementApi()
     .then((response) => {
       const payload = req.body.data;
@@ -105,4 +105,43 @@ router.post("/updateAccount", (req, res, next) => {
     });
 });
 
-module.exports = router;
+router.post("/linkTdaAccount", (req, res, next) => {
+  console.log("Incoming request", req.body.data);
+  res.send({
+    success: true,
+    message: "Message recieved",
+    data: req.body.data
+  });
+  // getManagementApi()
+  //   .then((response) => {
+  //     const payload = req.body.data;
+  //     const token = response.data;
+
+  //     return new Promise((resolve, reject) => {
+  //       axios({
+  //         method: "PATCH",
+  //         url: `${process.env.MANAGEMENT_API_AUDIENCE}users/${payload.id}`,
+  //         headers: {
+  //           authorization: `${token.token_type} ${token.access_token}`,
+  //           "content-type": "application/json",
+  //         },
+  //         data: {
+  //           user_metadata: {
+  //             preferences: {
+  //               isTdaLinked: payload.linkAccount,
+  //             },
+  //           },
+  //         },
+  //       })
+  //         .then((resolved) => {
+  //           resolve(resolved.data);
+  //         })
+  //         .catch((error) => {
+  //           console.log("Update details error: ", error);
+  //           reject(new Error("User update error: ", error));
+  //         });
+  //     });
+  //   })
+});
+
+module.exports = router

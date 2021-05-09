@@ -7,13 +7,13 @@ import customers from '../__mocks__/customers';
 const CustomerList = () => (
   <>
     <Helmet>
-      <title>Customers | Material Kit</title>
+      <title>Customers | Trading Journal</title>
     </Helmet>
     <Box
       sx={{
-        backgroundColor: 'background.default',
-        minHeight: '100%',
-        py: 3
+        backgroundColor: "background.default",
+        minHeight: "100%",
+        py: 3,
       }}
     >
       <Container maxWidth={false}>
