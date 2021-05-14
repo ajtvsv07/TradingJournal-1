@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Box, Container, Grid } from "@material-ui/core";
 import HandleTdAuthCode from "../components/account/HandleTdAuthCode";
+import { ErrorBoundary } from "react-error-boundary";
 
 const Account = () => (
   <>
