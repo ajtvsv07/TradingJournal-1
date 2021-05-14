@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 
-function useGenerateTokens(linkDetails, status, authCode) {
+function generateTokens(linkDetails, status, authCode) {
   const [tokenState, setTokenState] = useState({
     tdTokens: null,
     tdTokenStatus: "fetching",
@@ -10,9 +9,8 @@ function useGenerateTokens(linkDetails, status, authCode) {
   const cache = useRef({});
 
   useEffect(() => {
-    //   // TODO: limit how many times a user can request tokens (max 1 time per day?)
-    // if (!linkDetails) return;
-    const generateTokens = () => {
+    // TODO: limit how many times a user can request tokens (max 1 time per day?)
+    const generateTdTokens = () => {
       const { redirectUri, clientId } = linkDetails.data.payload;
       // console.log("Authcode: ", authCode);
       //     // const res = await axios.POST(
@@ -30,10 +28,12 @@ function useGenerateTokens(linkDetails, status, authCode) {
       //     //       "Content-Type": "application/x-www-form-urlencoded",
       //     //     },
       //     //   }
-      //     // );
+      //     // ).catch((error)=> {
+      //   throw new Error("Unable to generate tokens:", error.message);
+      // });
       //     // console.log("Incoming token request response: ", res.data);
 
-      //     // success placeholder
+      // success placeholder
       const res = {
         access_token: "access_token",
         refresh_token: "refresh_token",
@@ -42,7 +42,9 @@ function useGenerateTokens(linkDetails, status, authCode) {
         scope: "some_scope another_scope",
         refresh_token_expires_in: 2300,
       };
+      // cache resonse
       cache.current.tdTokens = res;
+      // udpate State
       setTokenState({
         tdTokens: res,
         tdTokenStatus: "fetched",
@@ -57,7 +59,7 @@ function useGenerateTokens(linkDetails, status, authCode) {
           tdTokenStatus: "fetched",
         });
       } else {
-        generateTokens();
+        generateTdTokens();
       }
     }
   }, [status]);
@@ -65,4 +67,4 @@ function useGenerateTokens(linkDetails, status, authCode) {
   return tokenState;
 }
 
-export default useGenerateTokens;
+export default generateTokens;

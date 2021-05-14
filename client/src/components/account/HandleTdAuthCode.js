@@ -14,6 +14,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import useGetAccessTokenSilently from "../../utils/useGetAccessTokenSilently";
 import useGetAuthLinkDetails from "../../utils/useGetAuthLinkDetails";
 import useGenerateTdTokens from "../../utils/useGenerateTdTokens";
+import useSaveTokens from "../../utils/useSaveTokens";
 
 // custom styles
 const useStyles = makeStyles((theme) => ({
@@ -56,58 +57,17 @@ const HandleAmerAuthCode = () => {
     status,
     authCode
   );
-  console.log({ tdTokens, tdTokenStatus });
+  
+  // save tokens to database
+  const { savedTokens, savedTokenStatus } = useSaveTokens(
+    tdTokens,
+    tdTokenStatus,
+    clientToken
+  );
 
-  // 4. If token request is successful, save latest data and update account link status
-  // const saveOnSuccess = (tdTokens) => {
-  //   // eslint-disable-next-line consistent-return
-  //   getAccessTokenSilently().then(async (token) => {
-  //     if (!token) return new Error("User not signed in");
-  //     try {
-  //       console.log("Client token: ", token);
-  //       const res = await axios.post(
-  //         `${process.env.REACT_APP_EXPRESS_API}/tda/updateAccStatusTokens`,
-  //         {
-  //           data: {
-  //             tokens: tdTokens,
-  //           },
-  //         },
-  //         {
-  //           headers: { Authorization: `Bearer ${token}` },
-  //         }
-  //       );
-  //       console.log("Response from our Express API: ", res.data);
-  //       //     // setState({
-  //       //     //   ...state,
-  //       //     //   PostAccessTokenStatus: "saved",
-  //       //     // });
-  //     } catch (error) {
-  //       //     console.log("Error in saving to Express API", error);
-  //       //     // setState({
-  //       //     //   ...state,
-  //       //     //   error: error.message,
-  //       //     // });
-  //     }
-  //   });
-  // };
+  console.log({ savedTokens, savedTokenStatus });
 
-  // 5. Handle connection error
-  // const handleError = ()=>{
-  // setError(), hendle etc.
-  // }
 
-  // if (tokenStatus) {
-  // make request to Express API passing the tokens and user ID
-  // useSetupAccountDetails(generatedTokens).then((res)=>{
-  //   if(res.success){
-  // setState with data
-  // }else{
-  // setState with error
-  //   }
-  // })
-  // }
-  // from there make request to management API to update account linked status
-  // if successful, save tokens to database along with unique identifier
   // respond with either success or failure
   // if account status udpate and tokens are successfully saved, setState with success message
   // if failure, setState with error message

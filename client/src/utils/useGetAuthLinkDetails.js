@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-function useGetAuthLinkDetails(clientToken) {
+function getAuthLinkDetails(clientToken) {
   const [authLinkDetails, setAuthLinkDetails] = useState({
     linkDetails: null,
     status: "fetching",
@@ -11,13 +11,17 @@ function useGetAuthLinkDetails(clientToken) {
   useEffect(() => {
     const setAuthDetails = async () => {
       const { clientAccessToken } = clientToken;
-      const res = await axios.get(
-        `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLink`,
-        {
+      const res = await axios
+        .get(`${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLink`, {
           headers: { Authorization: `Bearer ${clientAccessToken}` },
-        }
-      );
-      cache.current.authDetails = res.data.payload; // set response in cache;
+        })
+        .catch((error) => {
+          throw new Error("Unable to generate tokens:", error.message);
+        });
+
+      // cache resonse
+      cache.current.authDetails = res.data.payload;
+      // udpate State
       setAuthLinkDetails({
         linkDetails: res,
         status: "fetched",
@@ -40,4 +44,4 @@ function useGetAuthLinkDetails(clientToken) {
   return authLinkDetails;
 }
 
-export default useGetAuthLinkDetails;
+export default getAuthLinkDetails;

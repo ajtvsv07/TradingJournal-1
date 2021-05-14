@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
-function useGetAccessTokenSilently() {
+function getAccessToken() {
   const [clientToken, setClientToken] = useState({
     clientAccessToken: null,
     status: "fetching",
@@ -35,4 +35,4 @@ function useGetAccessTokenSilently() {
   return {clientToken};
 }
 
-export default useGetAccessTokenSilently;
+export default getAccessToken;

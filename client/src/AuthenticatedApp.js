@@ -1,14 +1,18 @@
-import "react-perfect-scrollbar/dist/css/styles.css";
-import { useRoutes } from "react-router-dom";
-import { ThemeProvider } from "@material-ui/core";
-import { ReactQueryDevtools } from "react-query/devtools";
-import { StylesProvider, jssPreset } from "@material-ui/core/styles";
-import { create } from "jss";
 import { HelmetProvider } from "react-helmet-async";
+
+import { useRoutes } from "react-router-dom";
+
 import { QueryClient, QueryClientProvider } from "react-query";
-import GlobalStyles from "./components/GlobalStyles";
+import { ReactQueryDevtools } from "react-query/devtools";
+
+import { StylesProvider, jssPreset, ThemeProvider } from "@material-ui/styles";
+import {create} from "jss"
+
 import "./mixins/chartjs";
 import theme from "./theme";
+import GlobalStyles from "./components/GlobalStyles";
+import "react-perfect-scrollbar/dist/css/styles.css";
+
 import routes from "./routes";
 
 const helmetContext = {};
@@ -16,7 +20,6 @@ const queryClient = new QueryClient();
 
 const jss = create({
   ...jssPreset(),
-  // Define a custom insertion point that JSS will look for when injecting the styles into the DOM.
   insertionPoint: document.getElementById("jss-insertion-point"),
 });
 
