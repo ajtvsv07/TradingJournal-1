@@ -1,36 +1,43 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-function useGetAuthLinkDetails(auth0ClientToken) {
-
-  const [linkDetails, setLinkDetails] = useState("");
-  const [linkStatus, setLinkStatus] = useState("fetching");
-
+function useGetAuthLinkDetails(clientToken) {
+  const [authLinkDetails, setAuthLinkDetails] = useState({
+    linkDetails: null,
+    status: "fetching",
+  });
+  const cache = useRef({});
+  
   useEffect(() => {
-      auth0ClientToken.then((token) => {
-        // cancel if they're not logged in
-        if (!token) return;
-        const fetchApi = async () => {
-          try {
-            const res = await axios.get(
-              `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLink`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            setLinkDetails(res.data.payload);
-            setLinkStatus("fetched");
-          } catch (error) {
-            setLinkStatus(error);
-          }
-        };
-
-        fetchApi();
+    const setAuthDetails = async () => {
+      const { clientAccessToken } = clientToken;
+      const res = await axios.get(
+        `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLink`,
+        {
+          headers: { Authorization: `Bearer ${clientAccessToken}` },
+        }
+      );
+      cache.current.authDetails = res.data.payload; // set response in cache;
+      setAuthLinkDetails({
+        linkDetails: res,
+        status: "fetched",
       });
+    };
 
-  }, []);
+    if (clientToken.status === "fetched") {
+      if (cache.current.authDetails) {
+        const token = cache.current.authDetails;
+        setAuthLinkDetails({
+          linkDetails: token,
+          status: "fetched",
+        });
+      } else {
+        setAuthDetails();
+      }
+    }
+  }, [clientToken.status]);
 
-  return { linkDetails, linkStatus };
+  return authLinkDetails;
 }
 
 export default useGetAuthLinkDetails;
