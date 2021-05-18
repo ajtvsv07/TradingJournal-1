@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
+import useErrorHandler from "./useErrorHandler";
 
 function saveTokens(tdTokens, tdTokenStatus, clientToken) {
   const [savedTokens, setSavedTokens] = useState({
@@ -13,31 +14,36 @@ function saveTokens(tdTokens, tdTokenStatus, clientToken) {
 
   // TODO: do you need to verify "isAuthenticated" here before saving
   // TODO: get unique user identifier to save along with token data
+  const handleError = useErrorHandler();
 
   useEffect(() => {
     const saveTdTokens = async () => {
-      console.log("Incoming client token: ", clientToken);
-      const res = await axios
-        .post(
-          `${process.env.REACT_APP_EXPRESS_API}/tda/updateAccStatusTokens`,
-          {
-            data: tdTokens,
-          },
-          {
-            headers: { Authorization: `Bearer ${clientAccessToken}` },
-          }
-        )
-        .catch((error) => {
-          throw new Error("Unable to generate tokens:", error.message);
-        });
+      console.log({ user, isAuthenticated });
+      if (isAuthenticated) {
+        const res = await axios
+          .post(
+            `${process.env.REACT_APP_EXPRESS_API}/tda/updateAccStatusTokens`,
+            {
+              data: tdTokens,
+              userId: user.sub,
+            },
+            {
+              headers: { Authorization: `Bearer ${clientAccessToken}` },
+            }
+          )
+          .catch((error) => {
+            console.log("Catching error: ", error.message);
+            handleError(error);
+          });
 
-      // cache resonse
-      cache.current.savedTokens = res;
-      // udpate State
-      setSavedTokens({
-        savedTokens: res,
-        savedTokenStatus: "fetched",
-      });
+        // cache resonse
+        cache.current.savedTokens = res;
+        // udpate State
+        setSavedTokens({
+          savedTokens: res,
+          savedTokenStatus: "fetched",
+        });
+      }
     };
     console.log("TD Token Status: ", tdTokenStatus);
     if (tdTokenStatus === "fetched" && status === "fetched") {

@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 import HandleTdAuthCode from "../components/account/HandleTdAuthCode";
 
 const Account = () => {
-  function ErrorFallback({ error }) {
+  function ErrorFallback({error}) {
     return (
       <Container maxWidth="lg">
         <Grid container>
@@ -47,9 +47,6 @@ const Account = () => {
             <Grid item lg={12} md={6} xs={12}>
               <ErrorBoundary
                 FallbackComponent={ErrorFallback}
-                onReset={() => {
-                  // TODO: navigate back to account page to try again
-                }}
               >
                 <HandleTdAuthCode />
               </ErrorBoundary>
