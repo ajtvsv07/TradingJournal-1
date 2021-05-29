@@ -6,6 +6,7 @@ import PropTypes from "prop-types";
 import HandleTdAuthCode from "../components/account/HandleTdAuthCode";
 
 const Account = () => {
+  // error boundary
   function ErrorFallback({error}) {
     return (
       <Container maxWidth="lg">

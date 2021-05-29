@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import axios from "axios";
 
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
@@ -28,14 +27,12 @@ const useStyles = makeStyles((theme) => ({
 
 const HandleAmerAuthCode = () => {
   const classes = useStyles();
-  const { user, isAuthenticated } = useAuth0();
+  const { isAuthenticated } = useAuth0();
 
   const [state, setState] = useState({
     error: null,
     isLoading: true,
-    postAccessTokens: null,
-    postAccessTokenStatus: "fetching",
-    auth0ClientToken: null,
+    statusMessage: "Linking your account...",
   });
 
   // urlDecode auth code from url
@@ -43,37 +40,49 @@ const HandleAmerAuthCode = () => {
     return new URLSearchParams(useLocation().search);
   }
   const query = useQuery();
-  const authCode = decodeURIComponent(query.get("code")); // store code, pass into the generate tokens method
+  // needed to useGenerateTdTokens and useSaveTokens
+  const tdAuthCode = decodeURIComponent(query.get("code"));
 
   // get auth0 client token
   const { clientToken } = useGetAccessTokenSilently();
 
   // fetch authlink details
-  const { linkDetails, status } = useGetAuthLinkDetails(clientToken);
+  const { linkDetails, authLinkStatus } = useGetAuthLinkDetails(clientToken);
 
   // generate TD tokens
   const { tdTokens, tdTokenStatus } = useGenerateTdTokens(
     linkDetails,
-    status,
-    authCode
+    authLinkStatus,
+    tdAuthCode
   );
-  
+
   // save tokens to database
   const { savedTokens, savedTokenStatus } = useSaveTokens(
     tdTokens,
     tdTokenStatus,
-    clientToken
+    clientToken,
+    tdAuthCode
   );
 
-  console.log({ savedTokens, savedTokenStatus });
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (savedTokenStatus === "fetched" && savedTokens.success) {
+      console.log({ savedTokens, savedTokenStatus });
+      setState({
+        ...state,
+        statusMessage: "Account Linked!",
+      });
+      setTimeout(() => {
+        navigate("/app/account", {
+          replace: true,
+          state: { linkedStatus: "Success!", message: savedTokens.message },
+        });
+      }, 1500);
+    }
+  }, [savedTokens, savedTokenStatus]);
 
-  // respond with either success or failure
-  // if account status udpate and tokens are successfully saved, setState with success message
   // if failure, setState with error message
-  // redirect to dashboard page
-
-  // if token request is unsuccessful setState with error
 
   // redirect back to user account page, passing state messages to display to the user
 
@@ -95,6 +104,7 @@ const HandleAmerAuthCode = () => {
         >
           <Container maxWidth="lg">
             <div className={classes.spinner}>
+              <Typography variant="h6">{state.statusMessage}</Typography>
               {state.isLoading ? <CircularProgress /> : ""}
             </div>
             <Grid container>

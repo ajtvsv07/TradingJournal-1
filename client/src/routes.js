@@ -32,7 +32,7 @@ const routes = [
       { path: "register", element: <Register /> },
       { path: "404", element: <NotFound /> },
       { path: "/", element: <Navigate to="/app/dashboard" /> },
-      // include code param that will be appended to the url
+      // TdAuthCode route needs to work with a code param that is appended to the url - therfore the *
       { path: "/amerAuthCode/*", element: <TdAuthCode /> },
       { path: "*", element: <Navigate to="/404" /> },
     ],

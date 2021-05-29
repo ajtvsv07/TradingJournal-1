@@ -4,7 +4,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 function getAccessToken() {
   const [clientToken, setClientToken] = useState({
     clientAccessToken: null,
-    status: "fetching",
+    clientTokenStatus: "fetching",
   });
   const cache = useRef({});
   const { getAccessTokenSilently } = useAuth0();
@@ -15,7 +15,7 @@ function getAccessToken() {
         cache.current.clientToken = token; // set response in cache;
         setClientToken({
           clientAccessToken: token,
-          status: "fetched",
+          clientTokenStatus: "fetched",
         });
       });
     };
@@ -24,7 +24,7 @@ function getAccessToken() {
       const token = cache.current.clientToken;
       setClientToken({
         clientAccessToken: token,
-        status: "fetched",
+        clientTokenStatus: "fetched",
       });
     } else {
       setToken();

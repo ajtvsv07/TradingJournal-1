@@ -11,18 +11,9 @@ import {
 import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
 
-// const user = {
-//   avatar: '/static/images/avatars/avatar_6.png',
-//   city: 'Los Angeles',
-//   country: 'USA',
-//   jobTitle: 'Senior Developer',
-//   name: 'Katarina Smith',
-//   timezone: 'GTM-7'
-// };
-
-const AccountProfile = ({...rest}) => {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
-  let placeholder;
+// profile picture and user details card
+const AccountProfile = ({ ...rest }) => {
+  const { user, isAuthenticated } = useAuth0();
   return (
     isAuthenticated && (
       <Card {...rest}>

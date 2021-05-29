@@ -1,30 +1,29 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
-import useErrorHandler from "./useErrorHandler";
+import { useErrorHandler } from "react-error-boundary";
 
-function saveTokens(tdTokens, tdTokenStatus, clientToken) {
+function saveTokens(tdTokens, tdTokenStatus, clientToken, tdAuthCode) {
   const [savedTokens, setSavedTokens] = useState({
     savedTokens: null,
     savedTokenStatus: "fetching",
   });
   const cache = useRef({});
-  const { clientAccessToken, status } = clientToken;
+  const { clientAccessToken, clientTokenStatus } = clientToken;
   const { user, isAuthenticated } = useAuth0();
 
-  // TODO: do you need to verify "isAuthenticated" here before saving
-  // TODO: get unique user identifier to save along with token data
   const handleError = useErrorHandler();
 
   useEffect(() => {
+    // save tokens to database
     const saveTdTokens = async () => {
-      console.log({ user, isAuthenticated });
       if (isAuthenticated) {
         const res = await axios
           .post(
             `${process.env.REACT_APP_EXPRESS_API}/tda/updateAccStatusTokens`,
             {
-              data: tdTokens,
+              tdTokens,
+              tdAuthCode,
               userId: user.sub,
             },
             {
@@ -32,21 +31,24 @@ function saveTokens(tdTokens, tdTokenStatus, clientToken) {
             }
           )
           .catch((error) => {
-            console.log("Catching error: ", error.message);
-            handleError(error);
+            throw new Error("Request error: ", error);    
           });
-
-        // cache resonse
-        cache.current.savedTokens = res;
-        // udpate State
-        setSavedTokens({
-          savedTokens: res,
-          savedTokenStatus: "fetched",
-        });
+        // handle other errors with react-error-boundary
+        if (!res.data.success) {
+          const error = res.data;
+          handleError(error);
+        }else{
+          // cache response and update state
+          cache.current.savedTokens = res.data;
+          setSavedTokens({
+            savedTokens: res.data,
+            savedTokenStatus: "fetched",
+          });
+        }
       }
     };
-    console.log("TD Token Status: ", tdTokenStatus);
-    if (tdTokenStatus === "fetched" && status === "fetched") {
+
+    if (tdTokenStatus === "fetched" && clientTokenStatus === "fetched") {
       if (cache.current.savedTokens) {
         const tokens = cache.current.savedTokens;
         console.log("Cached saved tokens: ", tokens);
@@ -58,7 +60,7 @@ function saveTokens(tdTokens, tdTokenStatus, clientToken) {
         saveTdTokens();
       }
     }
-  }, [tdTokenStatus]);
+  }, [tdTokenStatus, clientTokenStatus]);
 
   return savedTokens;
 }

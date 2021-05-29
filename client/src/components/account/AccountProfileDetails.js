@@ -18,7 +18,6 @@ import NotInterestedIcon from "@material-ui/icons/NotInterested";
 import axios from "axios";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import LinkTdAccount from "./LinkTdAccount";
 
 const useStyles = makeStyles((theme) => ({
   // TODO: Fix loading spinner size in button. Currently button changes size
@@ -31,14 +30,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+// personal user account profile details (form)
 const AccountProfileDetails = () => {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const classes = useStyles();
 
-  // TODO: figure out how to display a success or failure message only when user redirects from the 
-  // link-account set up page
-
-  console.log("User object: ", user);
+  // console.log("Logging user object from AccountProfileDetails: ", user);
 
   const [userDetails, setUserDetails] = useState({
     reqFeedback: false,
@@ -50,16 +47,14 @@ const AccountProfileDetails = () => {
     username: user["https://tradingjournal/username"],
     id: user.sub,
   });
-
+  // update profile details
   const callServerApi = (event) => {
     event.preventDefault();
     setUserDetails({ ...userDetails, loading: true });
-
     let emailChanged = false;
     if (userDetails.email !== user.email) {
       emailChanged = true;
     }
-
     getAccessTokenSilently().then((token) => {
       axios
         .post(
@@ -79,7 +74,8 @@ const AccountProfileDetails = () => {
         .then((response) =>
           // console.log("POST response: ", response);
           response.data.success
-            ? getAccessTokenSilently({ ignoreCache: true }).then(() => {
+            ? // getAccessTokenSilently again to recieve the most recent data we just updated through this call to the server
+              getAccessTokenSilently({ ignoreCache: true }).then(() => {
                 setUserDetails(() => ({
                   ...userDetails,
                   reqFeedback: response.data.message,
@@ -111,8 +107,8 @@ const AccountProfileDetails = () => {
         <Box mb={10}>
           <Card>
             <CardHeader
-              subheader="The information can be edited"
               title="Profile"
+              subheader="The information can be edited"
             />
             <Divider />
             <CardContent>
@@ -226,7 +222,6 @@ const AccountProfileDetails = () => {
             </Box>
           </Card>
         </Box>
-        <LinkTdAccount/>
       </>
     )
   );

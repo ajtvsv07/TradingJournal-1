@@ -24,7 +24,8 @@ const jwtCheck = jwt({
   algorithms: ["RS256"],
 });
 
-// require("./config/database");
+// connect to database
+require("./config/database");
 
 app.use(
   cors({
