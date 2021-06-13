@@ -1,26 +1,39 @@
-import React from "react";
 import axios from "axios";
 
-import { useAuth0 } from "@auth0/auth0-react";
-import useGetAuthLinkDetails from "../../utils/useGetAuthLinkDetails";
-
-const DisconnectTdAccount = async (clientToken) => {
-  console.log("Checking the client token first: ", clientToken);
+export default function disconnectTdAccount(user, clientToken) {
   const { clientAccessToken, clientTokenStatus } = clientToken;
+  const userId = user.sub;
 
-  const res = await axios
-    .get(`${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`, {
-      headers: { Authorization: `Bearer ${clientAccessToken}` },
-    })
-    .catch((error) => {
-      // handled by react-error-boundary
-      throw new Error(
-        "Unable to disconnect account. Please try again later:",
-        error.message
-      );
-    });
+  return new Promise((resolve, reject) => {
+    const runDisconnect = async () => {
+      // call server
+      const res = await axios
+        .post(
+          `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
+          {
+            data: {
+              user: userId,
+            },
+          },
+          {
+            headers: { Authorization: `Bearer ${clientAccessToken}` },
+          }
+        )
+        .catch((error) => {
+          // handled by react-error-boundary
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject("There was an error with the request: ", error.message);
+        });
 
-  console.log("Logging disconnectAccount response: ", res.data);
-};
+      resolve(res.data);
+    };
 
-export default DisconnectTdAccount;
+    // ensure tokens are valid to make request
+    if (clientTokenStatus === "fetched") {
+      runDisconnect();
+    } else {
+      // eslint-disable-next-line prefer-promise-reject-errors
+      reject("Valid client tokens not found. Please try again later");
+    }
+  });
+}

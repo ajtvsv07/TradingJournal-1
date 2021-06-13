@@ -13,6 +13,6 @@ router.get("/tda/tdaUserAuthLinkDetails", tdaHandler.tdaUserAuthLinkDetails);
 router.post("/tda/updateAccStatusTokens", tdaHandler.updateAccStatusTokens);
 
 // delete all account data from db, update isTdaLinked status
-router.get("/tda/disconnectAccount", tdaHandler.disconnectAccount);
+router.post("/tda/disconnectAccount", tdaHandler.disconnectAccount);
 
 module.exports = router;

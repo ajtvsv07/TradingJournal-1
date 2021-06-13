@@ -46,7 +46,7 @@ function LinkInProgressDialog({ open, onClose }) {
   );
 }
 
-export default function AttemptingToLinkDialog({ setLinkingAcc, linkingAcc }) {
+export default function AttemptingToLinkDialog({ linkingAcc, setLinkingAcc }) {
   console.log("Rendering AttemptingToLinkDialog");
   // set modal open as default
   let isOpen = true;

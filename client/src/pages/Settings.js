@@ -1,7 +1,6 @@
-import { Helmet } from 'react-helmet-async';
-import { Box, Container } from '@material-ui/core';
-import SettingsNotifications from '../components/settings/SettingsNotifications';
-import SettingsPassword from '../components/settings/SettingsPassword';
+import { Helmet } from "react-helmet-async";
+import { Box, Container } from "@material-ui/core";
+import SettingsNotifications from "../components/settings/SettingsNotifications";
 
 const SettingsView = () => (
   <>
@@ -10,9 +9,9 @@ const SettingsView = () => (
     </Helmet>
     <Box
       sx={{
-        backgroundColor: 'background.default',
-        minHeight: '100%',
-        py: 3
+        backgroundColor: "background.default",
+        minHeight: "100%",
+        py: 3,
       }}
     >
       <Container maxWidth="lg">

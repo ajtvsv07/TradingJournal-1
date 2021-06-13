@@ -9,7 +9,6 @@ import {
   Switch,
   Typography,
 } from "@material-ui/core";
-import { useAuth0 } from "@auth0/auth0-react";
 
 // TODO: Link the "connect TDA settings" to Auth0's user metadata
 // 1 - Instead of using state - pull from auth0's object
@@ -20,7 +19,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 //    • Watch for memory leaks as that node is created and destroyed
 
 export default function SettingsNotifications(props) {
-  const { user } = useAuth0();
   const [state, setState] = React.useState({
     linkAccount: false,
   });

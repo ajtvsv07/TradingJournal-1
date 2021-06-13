@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/* eslint-disable no-else-return */
+import React, { useState, useEffect } from "react";
 
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
@@ -18,7 +19,7 @@ import useGetAuthLinkDetails from "../../utils/useGetAuthLinkDetails";
 
 import disconnectAccount from "./DisconnectTdAccount";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   // TODO: Fix loading spinner size in button. Currently button changes size
   container: {
     justifyContent: "flex-end",
@@ -60,49 +61,65 @@ const useStyles = makeStyles((theme) => ({
 // trigger loading animation
 // begin requests to disconnect - display success/error message from server
 
-const ConnectTDAccount = ({ linkingAcc, setLinkingAcc }) => {
+export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
   const classes = useStyles();
-
   // get auth0 client token
   const { clientToken } = useGetAccessTokenSilently();
   // fetch authlink details
   const { linkDetails, authLinkStatus } = useGetAuthLinkDetails(clientToken);
+  const [latestAccLinkStatus, setLatestAccLinkStatus] = useState(linkingAcc);
 
-  const disconnectTdAccount = () => {
-    // update parent component state
-    setLinkingAcc(() => ({
+  console.log(`Link controller component state: `, latestAccLinkStatus);
+
+  useEffect(() => {
+    // ensure status data always up-to-date
+    if (latestAccLinkStatus !== linkingAcc) {
+      setLatestAccLinkStatus(linkingAcc);
+    }
+  }, [linkingAcc]);
+
+  function handleDisconnectAccount() {
+    setLinkingAcc({
       ...linkingAcc,
       attemptingToDisconnect: true,
-    }));
-    // call disconnect function
-    disconnectAccount(clientToken);
-  };
+    });
+  }
 
-  const handleLinkAccountChange = () => {
-    setLinkingAcc(() => ({
-      ...linkingAcc,
-      attemptingToLink: true,
-    }));
-  };
+  // TODO: fix this handle toggle
+  function handleToggle() {
+    if (linkingAcc.isTdAccountLinked) {
+      console.log("Account is linked, trigger attempt to disconnect");
+      setLinkingAcc({
+        ...linkingAcc,
+        attemptingToDisconnect: !latestAccLinkStatus.attemptingToDisconnect,
+      });
+    } else {
+      console.log("Account is not linked, trigger attempting to link");
+      setLinkingAcc({
+        ...linkingAcc,
+        attemptingToLink: !latestAccLinkStatus.attemptingToLink,
+      });
+    }
+  }
 
   // generate td auth link
-  const generateAuthLink = async () => {
+  async function generateAuthLink() {
     const baseURl = process.env.REACT_APP_TD_AUTH_BASE_URL;
     const endUrl = process.env.REACT_APP_TD_AUTH_END_URL;
     // TODO: Notify user they are being redirected to the trusted provider - Possible countdown
     const { clientId, redirectUri } = await linkDetails.data.payload;
-    await setLinkingAcc({
+    setLinkingAcc({
       ...linkingAcc,
       attemptingToLink: true,
     });
     window.open(`${baseURl + redirectUri}&client_id=${clientId + endUrl}`);
-  };
+  }
 
   return (
     <Box mb={10}>
       <Card>
         <CardHeader
-          title="Connect to TD Ameritrade"
+          title="Connection to TD Ameritrade"
           subheader="Manage your connection to TD Ameritrade in order to automatically sync your trades"
         />
         <Divider />
@@ -112,71 +129,100 @@ const ConnectTDAccount = ({ linkingAcc, setLinkingAcc }) => {
               <FormControlLabel
                 control={
                   <Switch
-                    checked={linkingAcc.isTdAccountLinked}
-                    onChange={handleLinkAccountChange}
+                    checked={latestAccLinkStatus.isTdAccountLinked}
+                    onChange={handleToggle}
                     name="linkAccount"
                     color="primary"
                   />
                 }
-                label={
-                  linkingAcc.isTdAccountLinked ? (
-                    <Grid
-                      container
-                      spacing={5}
-                      direction="row"
-                      justify="flex-start"
-                      alignItems="center"
-                      pt={5}
-                      ml={1}
-                    >
-                      <Typography variant="h4" mr={2}>
-                        Account Linked
-                      </Typography>
-                      <Typography color="textPrimary" variant="h5">
-                        Syncing trades automatically
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          p: 2,
-                        }}
+                label={(() => {
+                  // is connected
+                  if (latestAccLinkStatus.isTdAccountLinked) {
+                    return (
+                      <Grid
+                        container
+                        spacing={5}
+                        direction="row"
+                        justify="flex-start"
+                        alignItems="center"
+                        pt={5}
+                        ml={1}
                       >
-                        <Button
-                          color="primary"
-                          variant="contained"
-                          onClick={disconnectTdAccount}
-                        >
-                          Disconnect my TD Ameritrade Account
-                        </Button>
-                      </Box>
-                    </Grid>
-                  ) : (
-                    <Grid
-                      container
-                      spacing={5}
-                      direction="row"
-                      justify="flex-start"
-                      alignItems="center"
-                      pt={5}
-                      ml={1}
-                    >
-                      <Typography variant="h4" mr={2}>
-                        Account Not Linked
-                      </Typography>
-                      <Typography color="textPrimary" variant="h5">
-                        I don&apos;t want to sync my trades.
-                      </Typography>
-                    </Grid>
-                  )
-                }
+                        <Typography variant="h4" mr={2}>
+                          Account Linked
+                        </Typography>
+                        <Typography color="textPrimary" variant="h5">
+                          Syncing trades automatically
+                        </Typography>
+                      </Grid>
+                    );
+                  }
+                  // is not connected
+                  else if (!latestAccLinkStatus.isTdAccountLinked) {
+                    return (
+                      <Grid
+                        container
+                        spacing={5}
+                        direction="row"
+                        justify="flex-start"
+                        alignItems="center"
+                        pt={5}
+                        ml={1}
+                      >
+                        <Typography variant="h4" mr={2}>
+                          Account Not Linked
+                        </Typography>
+                        <Typography color="textPrimary" variant="h5">
+                          I don&apos;t want to sync my trades.
+                        </Typography>
+                      </Grid>
+                    );
+                  }
+                  // in the process of disconnecting
+                  else {
+                    return (
+                      <div>
+                        <Typography variant="h3">
+                          Attempting to Disconnect
+                        </Typography>
+                      </div>
+                    );
+                  }
+                })()}
               />
             </Grid>
+            {
+              // is connected
+              latestAccLinkStatus.isTdAccountLinked ? (
+                <Grid item>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      p: 2,
+                    }}
+                  >
+                    <Button
+                      color="primary"
+                      variant="contained"
+                      onClick={handleToggle}
+                    >
+                      Disconnect my TD Ameritrade Account
+                    </Button>
+                  </Box>
+                </Grid>
+              ) : (
+                ""
+              )
+            }
           </Grid>
         </CardContent>
-        <CardContent>
-          {linkingAcc.attemptingToLink ? (
-            <div>
+        {
+          // if TD Account is not linked and not attempting to disconnect or connect
+          !latestAccLinkStatus.isTdAccountLinked &&
+          !latestAccLinkStatus.attemptingToDisconnect &&
+          !latestAccLinkStatus.attemptingToLink ? (
+            <CardContent>
               <Grid item xs={12}>
                 <Typography color="text-primary">
                   In order to connect your TD Ameritrade Account, you&apos;ll
@@ -198,7 +244,7 @@ const ConnectTDAccount = ({ linkingAcc, setLinkingAcc }) => {
                     size="medium"
                     variant="contained"
                     className={classes.grayButton}
-                    onClick={handleLinkAccountChange}
+                    onClick={handleToggle}
                   >
                     Cancel
                   </Button>
@@ -214,19 +260,17 @@ const ConnectTDAccount = ({ linkingAcc, setLinkingAcc }) => {
                   </Button>
                 </Grid>
               </Grid>
-            </div>
+            </CardContent>
           ) : (
             ""
-          )}
-        </CardContent>
+          )
+        }
       </Card>
     </Box>
   );
-};
+}
 
-ConnectTDAccount.propTypes = {
+LinkTdAccount.propTypes = {
   setLinkingAcc: PropTypes.func,
   linkingAcc: PropTypes.object,
 };
-
-export default ConnectTDAccount;

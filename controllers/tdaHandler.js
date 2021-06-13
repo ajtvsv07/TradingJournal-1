@@ -45,7 +45,6 @@ module.exports = {
       res.send({
         success: false,
         message: specificError,
-        payload: req.body,
       });
     };
     // validate incoming payload
@@ -125,15 +124,52 @@ module.exports = {
 
   // delete all account data from db, update isTdaLinked status
   disconnectAccount: (req, res, next) => {
-    console.log("Incoming data: ", req.body);
+    const userId = req.body.data.user;
 
-    // TODO: query database and delete information
+    // query database and delete user document
+    const deleteAccessCreds = () => {
+      return new Promise((resolve, reject) => {
+        TdAccessCred.findByIdAndDelete(userId, (err, userDeleted) => {
+          console.log("Testing query error: ", err);
+          console.log("Testing query userDeleted result: ", userDeleted);
+          if (userDeleted && userDeleted !== null) {
+            console.log("Query output: ", userDeleted);
+            resolve(`Deleted user creds ${userDeleted} successfully`);
+          } else {
+            reject(err);
+          }
+        });
+      });
+    };
+
+    deleteAccessCreds()
+      .then((result, rejected) => {
+        if (rejected) {
+          console.log("Promise rejected: ", rejected);
+          res.send({
+            success: false,
+            data: null,
+            message: "Handle rejected message",
+          });
+        } else {
+          res.send({
+            success: true,
+            data: result,
+            message: "Successfully disconnected account!",
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(
+          "There was an error in attempting to disconnect from the database: ",
+          error
+        );
+        res.send({
+          success: false,
+          message: `Disconnect query error: ${error}`,
+        });
+      });
+
     // TODO: update auth0 isTdaLinked status
-
-    res.send({
-      status: "success",
-      data: null,
-      message: "Successfully disconnected account!",
-    });
   },
 };

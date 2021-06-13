@@ -8,8 +8,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import AccountProfile from "../components/account/AccountProfile";
 import AccountProfileDetails from "../components/account/AccountProfileDetails";
 import LinkTdAccount from "../components/account/LinkTdAccount";
-import AccountLinkedStatusModal from "../components/account/LinkedStatusModal";
-import LinkInProgressModal from "../components/account/LinkInProgressModal";
+import LinkAccStatusModal from "../components/account/LinkAccStatusModal";
 
 const Account = () => {
   const { user, isAuthenticated } = useAuth0();
@@ -17,28 +16,31 @@ const Account = () => {
   const isIncomingState = Boolean(location.state);
   const [linkingAcc, setLinkingAcc] = useState({
     isTdAccountLinked: user["https://tradingjournal/link-account"],
-    accountLinkAttempted: null,
+    accountLinkAttempted: false,
     attemptingToLink: false,
     attemptingToDisconnect: false,
-    linkMessage: {
+    disconnectFailed: null,
+    linkState: {
       message: null,
       status: null,
     },
   });
 
+  console.log("Acc Parent Component: ", linkingAcc);
+
   useEffect(() => {
     if (isIncomingState) {
       setLinkingAcc({
+        ...linkingAcc,
         accountLinkAttempted: true,
         attemptingToLink: false,
-        attemptingToDisconnect: false,
-        linkMessage: {
+        linkState: {
           message: location.state.message,
           status: location.state.linkedStatus,
         },
       });
     }
-  }, [isIncomingState]);
+  });
 
   return (
     isAuthenticated && (
@@ -73,28 +75,10 @@ const Account = () => {
                 />
               </Grid>
             </Grid>
-            {
-              // linkInProgress modal - displays while there's a link attempt in progress
-              linkingAcc.attemptingToLink ? (
-                <LinkInProgressModal
-                  linkingAcc={linkingAcc}
-                  setLinkingAcc={setLinkingAcc}
-                />
-              ) : (
-                ""
-              )
-            }
-            {
-              // accountLinkAttempted modal - displays attempt error or success
-              linkingAcc.accountLinkAttempted ? (
-                <AccountLinkedStatusModal
-                  message={linkingAcc.linkMessage.message}
-                  linkedStatus={linkingAcc.linkMessage.status}
-                />
-              ) : (
-                ""
-              )
-            }
+            <LinkAccStatusModal
+              linkingAcc={linkingAcc}
+              setLinkingAcc={setLinkingAcc}
+            />
           </Container>
         </Box>
       </>

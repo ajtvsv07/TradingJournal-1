@@ -16,7 +16,7 @@ import useGenerateTdTokens from "../../utils/useGenerateTdTokens";
 import useSaveTokens from "../../utils/useSaveTokens";
 
 // custom styles
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   spinner: {
     position: "fixed",
     top: "50%",
@@ -67,6 +67,7 @@ const HandleAmerAuthCode = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // handle successful response
     if (savedTokenStatus === "fetched" && savedTokens.success) {
       console.log({ savedTokens, savedTokenStatus });
       setState({
@@ -77,6 +78,18 @@ const HandleAmerAuthCode = () => {
         navigate("/app/account", {
           replace: true,
           state: { linkedStatus: "Success!", message: savedTokens.message },
+        });
+      }, 1500);
+    } else {
+      // handle failure response
+      setState({
+        ...state,
+        statusMessage: "Linking Error",
+      });
+      setTimeout(() => {
+        navigate("/app/account", {
+          replace: true,
+          state: { linkedStatus: "Error", message: savedTokens.message },
         });
       }, 1500);
     }
