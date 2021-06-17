@@ -10,10 +10,10 @@ import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import useGetAccessTokenSilently from "../../utils/useGetAccessTokenSilently";
-import useGetAuthLinkDetails from "../../utils/useGetAuthLinkDetails";
-import useGenerateTdTokens from "../../utils/useGenerateTdTokens";
-import useSaveTokens from "../../utils/useSaveTokens";
+import useGetAccessTokenSilently from "./useGetAccessTokenSilently";
+import useGetAuthLinkDetails from "./useGetAuthLinkDetails";
+import useGenerateTdTokens from "./useGenerateTdTokens";
+import useSaveTokens from "./useSaveTokens";
 
 // custom styles
 const useStyles = makeStyles(() => ({
@@ -25,22 +25,20 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const HandleAmerAuthCode = () => {
+// handle incoming response from TD Ameritrade with success or failure
+export default function HandleAmerAuthCode() {
   const classes = useStyles();
   const { isAuthenticated } = useAuth0();
 
   const [state, setState] = useState({
     error: null,
     isLoading: true,
-    statusMessage: "Linking your account...",
+    statusMessage: "In Progress...",
   });
 
-  // urlDecode auth code from url
-  function useQuery() {
-    return new URLSearchParams(useLocation().search);
-  }
+  // urlDecode auth code
+  const useQuery = () => new URLSearchParams(useLocation().search);
   const query = useQuery();
-  // needed to useGenerateTdTokens and useSaveTokens
   const tdAuthCode = decodeURIComponent(query.get("code"));
 
   // get auth0 client token
@@ -69,7 +67,7 @@ const HandleAmerAuthCode = () => {
   useEffect(() => {
     // handle successful response
     if (savedTokenStatus === "fetched" && savedTokens.success) {
-      console.log({ savedTokens, savedTokenStatus });
+      // console.log({ savedTokenStatus, savedTokens });
       setState({
         ...state,
         statusMessage: "Account Linked!",
@@ -77,10 +75,10 @@ const HandleAmerAuthCode = () => {
       setTimeout(() => {
         navigate("/app/account", {
           replace: true,
-          state: { linkedStatus: "Success!", message: savedTokens.message },
+          state: { status: "Success!", message: savedTokens.message },
         });
       }, 1500);
-    } else {
+    } else if (savedTokenStatus === "fetched") {
       // handle failure response
       setState({
         ...state,
@@ -89,15 +87,11 @@ const HandleAmerAuthCode = () => {
       setTimeout(() => {
         navigate("/app/account", {
           replace: true,
-          state: { linkedStatus: "Error", message: savedTokens.message },
+          state: { status: "Error", message: savedTokens.message },
         });
       }, 1500);
     }
-  }, [savedTokens, savedTokenStatus]);
-
-  // if failure, setState with error message
-
-  // redirect back to user account page, passing state messages to display to the user
+  }, [savedTokenStatus]);
 
   // TODO: Keep track of the time limit on the refresh token (90 days), and access token (30 min)
   // TODO: exchange token for new version before it expires
@@ -118,14 +112,12 @@ const HandleAmerAuthCode = () => {
           <Container maxWidth="lg">
             <div className={classes.spinner}>
               <Typography variant="h6">{state.statusMessage}</Typography>
+              <Typography variant="h4">Linking Your Account</Typography>
               {state.isLoading ? <CircularProgress /> : ""}
             </div>
             <Grid container>
               <Grid item>
-                <Typography>
-                  This is the empty page that will handle the TD Ameritrade auth
-                  code linking
-                </Typography>
+                <Typography>Stay Put, almost done!</Typography>
               </Grid>
             </Grid>
           </Container>
@@ -133,6 +125,4 @@ const HandleAmerAuthCode = () => {
       </>
     )
   );
-};
-
-export default HandleAmerAuthCode;
+}

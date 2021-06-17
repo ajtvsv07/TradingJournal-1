@@ -3,11 +3,11 @@ import { Box, Container, Grid } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import { ErrorBoundary } from "react-error-boundary";
 import PropTypes from "prop-types";
-import HandleTdAuthCode from "../components/account/HandleTdAuthCode";
+import HandleTdAuthCode from "../utils/HandleTdAuthCode";
 
 const Account = () => {
   // error boundary
-  function ErrorFallback({error}) {
+  function ErrorFallback({ error }) {
     return (
       <Container maxWidth="lg">
         <Grid container>
@@ -46,9 +46,8 @@ const Account = () => {
         <Container maxWidth="lg">
           <Grid container spacing={3}>
             <Grid item lg={12} md={6} xs={12}>
-              <ErrorBoundary
-                FallbackComponent={ErrorFallback}
-              >
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                {/** handle incoming response from TD Ameritrade with success or failure */}
                 <HandleTdAuthCode />
               </ErrorBoundary>
             </Grid>

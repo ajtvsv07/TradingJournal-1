@@ -31,13 +31,13 @@ function saveTokens(tdTokens, tdTokenStatus, clientToken, tdAuthCode) {
             }
           )
           .catch((error) => {
-            throw new Error("Request error: ", error);    
+            throw new Error("Request error: ", error);
           });
         // handle other errors with react-error-boundary
         if (!res.data.success) {
           const error = res.data;
           handleError(error);
-        }else{
+        } else {
           // cache response and update state
           cache.current.savedTokens = res.data;
           setSavedTokens({

@@ -9,6 +9,8 @@ const hashPayload = require("../utils/hashPayload");
 const redirectUri = process.env.TDA_REDIRECT_URI;
 const clientId = process.env.TDA_CONSUMER_KEY;
 
+const updateManagementApi = require("../utils/updateManagementApi");
+
 // joi schema validation
 const schema = Joi.object({
   tdTokens: Joi.object()
@@ -38,21 +40,23 @@ module.exports = {
     });
   },
 
-  // Connect TD Ameritrade Account: save tda tokens to database and update isTdaLinked status
+  // Connect TD Ameritrade Account: save access tokens to database and update isTdaLinked status
   updateAccStatusTokens: (req, res, next) => {
-    // single error handler to reply to client (Client handling with react-error-boundary)
-    const topScopeErrorHandler = (specificError) => {
+    // object error helper
+    const sendErrorToClient = (err) => {
       res.send({
         success: false,
-        message: specificError,
+        message: err,
       });
     };
+
     // validate incoming payload
     const { error, value } = schema.validate(req.body);
-    // handle validation error - send to client
+
+    // handle validation error
     if (error) {
       // console.log("Validation Error: ", error.details[0]);
-      topScopeErrorHandler(error.details[0].message);
+      sendErrorToClient(error.details[0].message);
     } else if (value) {
       // salt and hash string and object values
       hashPayload(value).then((hashedPayload) => {
@@ -62,60 +66,37 @@ module.exports = {
           tdAuthCode: hashedPayload.tdAuthCode,
           tdTokens: hashedPayload.tdTokens,
         });
+
         // mongodb save method
-        tdAccessCreds.save(function (err, creds) {
-          if (creds) {
-            // call management API to get token, to then use in connecting with Auth0 and updating the isTdaLinked status
-            getManagementApi().then((response, mngErr) => {
-              if (mngErr) {
-                topScopeErrorHandler(mngErr);
-              }
-              const token = response.data;
-              const updateManagementApi = () => {
-                return new Promise((resolve, reject) => {
-                  axios({
-                    method: "PATCH",
-                    url: `${process.env.MANAGEMENT_API_AUDIENCE}users/${creds._id}`,
-                    headers: {
-                      authorization: `${token.token_type} ${token.access_token}`,
-                      "content-type": "application/json",
-                    },
-                    data: {
-                      user_metadata: {
-                        preferences: {
-                          isTdaLinked: true,
-                        },
-                      },
-                    },
-                  })
-                    .then((result) => {
-                      resolve(result.data);
-                    })
-                    .catch((error) => {
-                      console.log(
-                        "Error in updating isTdaLinked status: ",
-                        error
-                      );
-                      reject(new Error("isTdaLinked status error: ", error));
-                    });
-                });
-              };
-              // update isTdaLinked status and send final confirmation to client
-              updateManagementApi().then((result, err) => {
-                // final success response to client
-                // don't need to send the auth0 payload back to client
-                // console.log("payload: ", result);
-                result
-                  ? res.send({
+        tdAccessCreds.save(function (error, savedTokens) {
+          if (savedTokens) {
+            // get token to communicate with management api
+            getManagementApi()
+              .then((response) => {
+                const userId = savedTokens._id;
+                const apiToken = response.data;
+                const linked = true;
+
+                // update management API account link status
+                updateManagementApi(userId, apiToken, linked)
+                  .then((result) => {
+                    // send results to the client
+                    res.send({
                       success: true,
                       message: "Your account has been successfully linked!",
-                    })
-                  : topScopeErrorHandler(err);
+                    });
+                  })
+                  .catch((error) => {
+                    sendErrorToClient(`Request error ${error}`);
+                  });
+              })
+              .catch((error) => {
+                sendErrorToClient(`API token error ${error}`);
               });
-            });
           } else {
-            console.error(err);
-            topScopeErrorHandler(err);
+            sendErrorToClient(
+              `There was a problem in saving the tokens ${error}`
+            );
           }
         });
       });
@@ -126,50 +107,57 @@ module.exports = {
   disconnectAccount: (req, res, next) => {
     const userId = req.body.data.user;
 
-    // query database and delete user document
-    const deleteAccessCreds = () => {
-      return new Promise((resolve, reject) => {
-        TdAccessCred.findByIdAndDelete(userId, (err, userDeleted) => {
-          console.log("Testing query error: ", err);
-          console.log("Testing query userDeleted result: ", userDeleted);
-          if (userDeleted && userDeleted !== null) {
-            console.log("Query output: ", userDeleted);
-            resolve(`Deleted user creds ${userDeleted} successfully`);
-          } else {
-            reject(err);
-          }
-        });
+    // object error helper
+    const sendErrorToClient = (err) => {
+      res.send({
+        success: false,
+        message: err,
       });
     };
 
-    deleteAccessCreds()
-      .then((result, rejected) => {
-        if (rejected) {
-          console.log("Promise rejected: ", rejected);
-          res.send({
-            success: false,
-            data: null,
-            message: "Handle rejected message",
-          });
+    const deleteAccessCreds = new Promise((resolve, reject) => {
+      TdAccessCred.findByIdAndDelete(userId, (err, userDeleted) => {
+        if (userDeleted) {
+          resolve(`Deleted user creds successfully`);
         } else {
-          res.send({
-            success: true,
-            data: result,
-            message: "Successfully disconnected account!",
-          });
+          reject("No TD Ameritrade connection found");
         }
+      });
+    });
+
+    // delete user's post access token credentials
+    deleteAccessCreds
+      .then((resolved) => {
+        console.log("Deleted Credentials: ", resolved);
+
+        // get token to communicate with management api
+        getManagementApi()
+          .then((response) => {
+            const apiToken = response.data;
+            const linked = false;
+
+            // update management API account link status
+            updateManagementApi(userId, apiToken, linked)
+              .then((result) => {
+                // send results to the client
+                res.send({
+                  success: true,
+                  data: result,
+                  message: "Your account has been successfully linked!",
+                });
+              })
+              .catch((error) => {
+                sendErrorToClient(`Request error ${error}`);
+              });
+          })
+          .catch((error) => {
+            sendErrorToClient(`API token error ${error}`);
+          });
       })
       .catch((error) => {
-        console.log(
-          "There was an error in attempting to disconnect from the database: ",
-          error
+        sendErrorToClient(
+          `There was a problem in deleting the tokens ${error}`
         );
-        res.send({
-          success: false,
-          message: `Disconnect query error: ${error}`,
-        });
       });
-
-    // TODO: update auth0 isTdaLinked status
   },
 };

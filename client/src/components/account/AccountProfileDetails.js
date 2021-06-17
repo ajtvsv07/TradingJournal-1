@@ -74,7 +74,7 @@ const AccountProfileDetails = () => {
         .then((response) =>
           // console.log("POST response: ", response);
           response.data.success
-            ? // getAccessTokenSilently again to recieve the most recent data we just updated through this call to the server
+            ? // getAccessTokenSilently again to recieve the most recent data that was just updated through server call
               getAccessTokenSilently({ ignoreCache: true }).then(() => {
                 setUserDetails(() => ({
                   ...userDetails,
