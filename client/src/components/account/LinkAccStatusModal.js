@@ -88,7 +88,7 @@ function ModalDialog({ title, status, description, buttonContent, open, id }) {
 
 export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
   const classes = useStyles();
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user } = useAuth0();
   const { clientToken } = useGetAccessTokenSilently();
   const { linkDetails, authLinkStatus } = useGetAuthLinkDetails(clientToken);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,16 +116,6 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
 
     window.open(`${baseURl + redirectUri}&client_id=${clientId + endUrl}`);
   }
-
-  // async function syncLatestLinkedStatus() {
-  //   // sync state with latest user account link status that was just updated
-  //   await getAccessTokenSilently({ ignoreCache: true }).then(() => {
-  //     setLinkingAcc(() => ({
-  //       ...linkingAcc,
-  //       isTdAccountLinked: user["https://tradingjournal/link-account"],
-  //     }));
-  //   });
-  // }
 
   async function linkTdAccount() {
     // generate authorization link to redirect user
@@ -158,10 +148,8 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
           });
         } else {
           // display success in new modal
-          getAccessTokenSilently({ ignoreCache: true });
           setLinkingAcc({
             ...linkingAcc,
-            isTdAccountLinked: user["https://tradingjournal/link-account"],
             disconnectStatus: {
               ...linkingAcc.disconnectStatus,
               attemptingToDisconnect: false,
@@ -181,8 +169,7 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
         ...linkingAcc,
         disconnectStatus: {
           ...linkingAcc.disconnectStatus,
-          attemptingToDisconnect:
-            !linkingAcc.disconnectStatus.attemptingToDisconnect,
+          attemptingToDisconnect: false,
         },
       });
     } else if (latestAccLinkStatus.connectStatus.attemptingToLink) {
@@ -191,7 +178,7 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
         ...linkingAcc,
         connectStatus: {
           ...linkingAcc.connectStatus,
-          attemptingToLink: !linkingAcc.connectStatus.attemptingToLink,
+          attemptingToLink: false,
         },
       });
     } else if (latestAccLinkStatus.connectStatus.linkingInProgress) {
@@ -209,7 +196,7 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
         ...linkingAcc,
         connectStatus: {
           ...linkingAcc.connectStatus,
-          accountLinkAttempted: !linkingAcc.connectStatus.accountLinkAttempted,
+          accountLinkAttempted: false,
         },
       });
     } else if (latestAccLinkStatus.disconnectStatus.success) {
