@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useQuery } from "react-query";
 
 function getAccessToken() {
   const [clientToken, setClientToken] = useState({
@@ -32,7 +33,7 @@ function getAccessToken() {
   }, []);
 
   // console.log("Client access token: ", clientAccessToken);
-  return {clientToken};
+  return { clientToken };
 }
 
 export default getAccessToken;

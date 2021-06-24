@@ -17,11 +17,14 @@ import useSaveTokens from "./useSaveTokens";
 
 // custom styles
 const useStyles = makeStyles(() => ({
-  spinner: {
+  center: {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
+  },
+  spacer: {
+    margin: "2rem 0 2rem",
   },
 }));
 
@@ -110,16 +113,22 @@ export default function HandleAmerAuthCode() {
           }}
         >
           <Container maxWidth="lg">
-            <div className={classes.spinner}>
-              <Typography variant="h6">{state.statusMessage}</Typography>
-              <Typography variant="h4">Linking Your Account</Typography>
-              {state.isLoading ? <CircularProgress /> : ""}
-            </div>
-            <Grid container>
-              <Grid item>
-                <Typography>Stay Put, almost done!</Typography>
+            <div className={classes.center}>
+              <Grid container>
+                <Grid item className={classes.spacer}>
+                  <Typography>Stay Put, almost done!</Typography>
+                </Grid>
               </Grid>
-            </Grid>
+              {state.isLoading ? (
+                <CircularProgress classes={classes.spacer} />
+              ) : (
+                ""
+              )}
+              <Typography variant="h6" className={classes.spacer}>
+                {state.statusMessage}
+              </Typography>
+              <Typography variant="h4">Linking Your Account</Typography>
+            </div>
           </Container>
         </Box>
       </>

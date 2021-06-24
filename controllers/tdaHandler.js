@@ -143,7 +143,7 @@ module.exports = {
                 res.send({
                   success: true,
                   data: result,
-                  message: "Your account has been successfully linked!",
+                  message: "Your account has been disconnected",
                 });
               })
               .catch((error) => {

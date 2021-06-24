@@ -16,22 +16,24 @@ import LinkTdAccount from "../components/account/LinkTdAccount";
 import LinkAccStatusModal from "../components/account/LinkAccStatusModal";
 
 export default function Account() {
-  const { user, isAuthenticated } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const location = useLocation();
-  const isIncomingState = Boolean(location.state);
   const [linkingAcc, setLinkingAcc] = useState({
     isTdAccountLinked: user["https://tradingjournal/link-account"],
+    isIncomingState: Boolean(location.state),
     connectStatus: {
-      attemptingToLink: false,
-      linkingInProgress: false,
-      accountLinkAttempted: false,
-      success: null,
+      attemptingToLink: false, // display instructions and details
+      linkingInProgress: false, // display in progress message - waiting for user to grant authorization
+      accountLinkAttempted: false, // display result message - either success or error
+      success: null, // display success confirmation message
+      succeeded: null, // determine refresh of link state
     },
     disconnectStatus: {
-      attemptingToDisconnect: false,
-      error: null,
-      success: null,
-      message: null,
+      attemptingToDisconnect: false, // display instructions and details
+      error: null, // display error modal
+      message: null, // display server message
+      success: null, // display success confirmation message
+      succeeded: null, // determine refresh of link state
     },
     urlLinkState: {
       message: null,
@@ -65,14 +67,24 @@ export default function Account() {
   };
 
   useEffect(() => {
+    console.log("Is incoming state?: ", linkingAcc.isIncomingState);
+    console.log(
+      "Succeeded in disconnecting account?: ",
+      linkingAcc.disconnectStatus.succeeded
+    );
+    console.log(
+      "Succeeded in connecting account?: ",
+      linkingAcc.connectStatus.succeeded
+    );
     // if incoming url state, render message
-    if (isIncomingState) {
+    if (linkingAcc.isIncomingState) {
       // determine if connection was successful
       const successCondition = Boolean(location.state.status === "Success!");
 
       setTimeout(() => {
         setLinkingAcc({
           ...linkingAcc,
+          isIncomingState: false,
           connectStatus: {
             attemptingToLink: false,
             linkingInProgress: false,
@@ -85,8 +97,23 @@ export default function Account() {
           },
         });
       }, 800);
+    } else if (
+      linkingAcc.disconnectStatus.succeeded ||
+      linkingAcc.connectStatus.succeeded
+    ) {
+      // sync with latest linked status
+      getAccessTokenSilently({ ignoreCache: true }).then(() => {
+        setLinkingAcc({
+          ...linkingAcc,
+          isTdAccountLinked: user["https://tradingjournal/link-account"],
+        });
+      });
     }
-  }, []);
+  }, [
+    linkingAcc.isIncomingState,
+    linkingAcc.disconnectStatus.succeeded,
+    linkingAcc.connectStatus.succeeded,
+  ]);
 
   return (
     isAuthenticated && (

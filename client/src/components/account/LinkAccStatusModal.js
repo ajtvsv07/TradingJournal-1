@@ -90,8 +90,8 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
   const classes = useStyles();
   const { user } = useAuth0();
   const { clientToken } = useGetAccessTokenSilently();
-  const { linkDetails, authLinkStatus } = useGetAuthLinkDetails(clientToken);
-  const [isLoading, setIsLoading] = useState(false);
+  // const { linkDetails, authLinkStatus } = useGetAuthLinkDetails(clientToken);
+  const [isDisconnectingProgress, setIsDisconnectingProgress] = useState(false);
   const [latestAccLinkStatus, setLatestAccLinkStatus] = useState(linkingAcc);
   const [isOpen, setIsOpen] = useState(true);
 
@@ -100,27 +100,25 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
     setIsOpen(true);
 
     // clear is loading status in case connection times out
-    setIsLoading(false);
+    setIsDisconnectingProgress(false);
 
     // ensure component status is always up to do date with parent state
     if (latestAccLinkStatus !== linkingAcc) {
       setLatestAccLinkStatus(linkingAcc);
     }
-  }, [linkingAcc]);
+  });
 
-  // generate td auth link for user authorization
-  async function generateAuthLink() {
-    const baseURl = process.env.REACT_APP_TD_AUTH_BASE_URL;
-    const endUrl = process.env.REACT_APP_TD_AUTH_END_URL;
-    const { clientId, redirectUri } = await linkDetails.data.payload;
-
-    window.open(`${baseURl + redirectUri}&client_id=${clientId + endUrl}`);
-  }
+  const { isLoading, isError, data, error } =
+    useGetAuthLinkDetails(clientToken);
 
   async function linkTdAccount() {
-    // generate authorization link to redirect user
-    if (authLinkStatus === "fetched") {
-      await generateAuthLink();
+    // generate td auth link for user authorization
+    if (data) {
+      const baseURl = process.env.REACT_APP_TD_AUTH_BASE_URL;
+      const endUrl = process.env.REACT_APP_TD_AUTH_END_URL;
+      const { clientId, redirectUri } = await data.data.payload;
+
+      window.open(`${baseURl + redirectUri}&client_id=${clientId + endUrl}`);
     }
     setLinkingAcc({
       ...linkingAcc,
@@ -133,32 +131,30 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
   }
 
   function disconnectAccount() {
-    setIsLoading(true);
+    setIsDisconnectingProgress(true);
     disconnectTdAccount(user, clientToken).then((response) => {
-      setTimeout(() => {
-        // display error in new modal
-        if (!response.success) {
-          setLinkingAcc({
-            ...linkingAcc,
-            disconnectStatus: {
-              attemptingToDisconnect: false,
-              error: true,
-              message: response.message,
-            },
-          });
-        } else {
-          // display success in new modal
-          setLinkingAcc({
-            ...linkingAcc,
-            disconnectStatus: {
-              ...linkingAcc.disconnectStatus,
-              attemptingToDisconnect: false,
-              success: true,
-              message: response.message,
-            },
-          });
-        }
-      }, 800);
+      // display error in new modal
+      if (!response.success) {
+        setLinkingAcc({
+          ...linkingAcc,
+          disconnectStatus: {
+            attemptingToDisconnect: false,
+            error: true,
+            message: response.message,
+          },
+        });
+      } else {
+        // display success in new modal
+        setLinkingAcc({
+          ...linkingAcc,
+          disconnectStatus: {
+            ...linkingAcc.disconnectStatus,
+            attemptingToDisconnect: false,
+            success: true,
+            message: response.message,
+          },
+        });
+      }
     });
   }
 
@@ -192,21 +188,27 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
       });
     } else if (latestAccLinkStatus.connectStatus.accountLinkAttempted) {
       // close modal confirmation allowing user to navigate or try again latera
+      const successfullyLinked = Boolean(
+        latestAccLinkStatus.urlLinkState.status === "Success!"
+      );
       setLinkingAcc({
         ...linkingAcc,
         connectStatus: {
           ...linkingAcc.connectStatus,
           accountLinkAttempted: false,
+          ...(successfullyLinked && { succeeded: true }),
         },
       });
     } else if (latestAccLinkStatus.disconnectStatus.success) {
       // close modal confirmation allowing user to navigate away
       setLinkingAcc({
         ...linkingAcc,
+        isTdAccountLinked: user["https://tradingjournal/link-account"],
         disconnectStatus: {
           ...linkingAcc.disconnectStatus,
           success: null,
           message: null,
+          succeeded: true,
         },
       });
     } else {
@@ -363,7 +365,7 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
                 variant="contained"
                 onClick={disconnectAccount}
               >
-                {isLoading ? (
+                {isDisconnectingProgress ? (
                   <div>
                     <CircularProgress
                       classes={{ root: classes.spinner }}
@@ -400,9 +402,10 @@ export default function LinkAccStatusModal({ linkingAcc, setLinkingAcc }) {
           status={`Connection Status: ${latestAccLinkStatus.isTdAccountLinked}`}
           description={
             <Typography>
+              {`${latestAccLinkStatus.disconnectStatus.message}. \n
               All connection details have been deleted. If you ever want to sync
               your trades again, just re-authorize by following the connect
-              account details found on this page.
+              account details found on this page.`}
             </Typography>
           }
           buttonContent={

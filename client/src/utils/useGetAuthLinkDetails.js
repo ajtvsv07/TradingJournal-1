@@ -1,50 +1,25 @@
-import { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { useQuery } from "react-query";
 
 function getAuthLinkDetails(clientToken) {
-  const [authLinkDetails, setAuthLinkDetails] = useState({
-    linkDetails: null,
-    authLinkStatus: "fetching",
-  });
-  const cache = useRef({});
-  const { clientAccessToken, clientTokenStatus } = clientToken;
+  const { clientAccessToken } = clientToken;
 
-  useEffect(() => {
-    const setAuthDetails = async () => {
-      const res = await axios
-        .get(
-          `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`,
-          {
-            headers: { Authorization: `Bearer ${clientAccessToken}` },
-          }
-        )
-        .catch((error) => {
-          throw new Error("Unable to generate tokens:", error.message);
-        });
-
-      // cache resonse
-      cache.current.authDetails = res.data.payload;
-      // udpate State
-      setAuthLinkDetails({
-        linkDetails: res,
-        authLinkStatus: "fetched",
+  const fetchDetails = async () => {
+    const res = await axios
+      .get(`${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`, {
+        headers: { Authorization: `Bearer ${clientAccessToken}` },
+      })
+      .catch((error) => {
+        throw new Error("Unable to generate tokens:", error.message);
       });
-    };
 
-    if (clientTokenStatus === "fetched") {
-      if (cache.current.authDetails) {
-        const token = cache.current.authDetails;
-        setAuthLinkDetails({
-          linkDetails: token,
-          authLinkStatus: "fetched",
-        });
-      } else {
-        setAuthDetails();
-      }
-    }
-  }, [clientTokenStatus]);
+    return res;
+  };
 
-  return authLinkDetails;
+  return useQuery("getAuthLinkDetails", () => fetchDetails(), {
+    // The query will not execute until clientAccessToken exists
+    enabled: !!clientAccessToken,
+  });
 }
 
 export default getAuthLinkDetails;
