@@ -2,23 +2,22 @@ import axios from "axios";
 import { useQuery } from "react-query";
 
 function getAuthLinkDetails(clientToken) {
-  const { clientAccessToken } = clientToken;
-
+  // returns fetch promise
   const fetchDetails = async () => {
-    const res = await axios
+    const { data } = await axios
       .get(`${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`, {
-        headers: { Authorization: `Bearer ${clientAccessToken}` },
+        headers: { Authorization: `Bearer ${clientToken}` },
       })
       .catch((error) => {
         throw new Error("Unable to generate tokens:", error.message);
       });
 
-    return res;
+    return data;
   };
 
-  return useQuery("getAuthLinkDetails", () => fetchDetails(), {
-    // The query will not execute until clientAccessToken exists
-    enabled: !!clientAccessToken,
+  return useQuery("authLinkDetails", () => fetchDetails(), {
+    // The query will not execute until clientToken exists
+    enabled: !!clientToken,
   });
 }
 

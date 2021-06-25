@@ -40,8 +40,74 @@ export default function Account() {
       status: null,
     },
   });
+  console.log("Account component rendered: ");
 
-  // React-Error-Boundary and proptypes
+  useEffect(() => {
+    // if incoming url state, render message
+    if (linkingAcc.isIncomingState) {
+      // determine if connect attempt was successful
+      const successCondition = Boolean(location.state.status === "Success!");
+
+      setTimeout(() => {
+        setLinkingAcc({
+          ...linkingAcc,
+          isIncomingState: false,
+          connectStatus: {
+            attemptingToLink: false,
+            linkingInProgress: false,
+            accountLinkAttempted: true,
+            ...(successCondition && { success: true }),
+          },
+          urlLinkState: {
+            message: location.state.message,
+            status: location.state.status,
+          },
+        });
+      }, 800);
+    }
+
+    if (
+      linkingAcc.disconnectStatus.succeeded ||
+      linkingAcc.connectStatus.succeeded
+    ) {
+      // sync with latest linked status
+      getAccessTokenSilently({ ignoreCache: true }).then(() => {
+        setLinkingAcc({
+          ...linkingAcc,
+          isTdAccountLinked: user["https://tradingjournal/link-account"],
+        });
+      });
+    }
+
+    return function cleanup() {
+      setLinkingAcc({
+        ...linkingAcc,
+        isTdAccountLinked: user["https://tradingjournal/link-account"],
+      });
+    };
+  }, [
+    linkingAcc.isIncomingState,
+    linkingAcc.disconnectStatus.succeeded,
+    linkingAcc.connectStatus.succeeded,
+  ]);
+
+  function updateState(arg) {
+    console.log("Passed arg: ", arg);
+    setLinkingAcc(arg);
+  }
+
+  // TODO: figure out appropriate way of triggering render update
+  function closeModal(childStatus) {
+    updateState({
+      ...linkingAcc,
+      connectStatus: {
+        ...linkingAcc.connectStatus,
+        attemptingToLink: false,
+      },
+    });
+  }
+
+  // use for React-Error-Boundary
   function ErrorFallback({ error }) {
     return (
       <Container maxWidth="lg">
@@ -65,55 +131,6 @@ export default function Account() {
   ErrorFallback.propTypes = {
     error: PropTypes.object,
   };
-
-  useEffect(() => {
-    console.log("Is incoming state?: ", linkingAcc.isIncomingState);
-    console.log(
-      "Succeeded in disconnecting account?: ",
-      linkingAcc.disconnectStatus.succeeded
-    );
-    console.log(
-      "Succeeded in connecting account?: ",
-      linkingAcc.connectStatus.succeeded
-    );
-    // if incoming url state, render message
-    if (linkingAcc.isIncomingState) {
-      // determine if connection was successful
-      const successCondition = Boolean(location.state.status === "Success!");
-
-      setTimeout(() => {
-        setLinkingAcc({
-          ...linkingAcc,
-          isIncomingState: false,
-          connectStatus: {
-            attemptingToLink: false,
-            linkingInProgress: false,
-            accountLinkAttempted: true,
-            ...(successCondition && { success: true }),
-          },
-          urlLinkState: {
-            message: location.state.message,
-            status: location.state.status,
-          },
-        });
-      }, 800);
-    } else if (
-      linkingAcc.disconnectStatus.succeeded ||
-      linkingAcc.connectStatus.succeeded
-    ) {
-      // sync with latest linked status
-      getAccessTokenSilently({ ignoreCache: true }).then(() => {
-        setLinkingAcc({
-          ...linkingAcc,
-          isTdAccountLinked: user["https://tradingjournal/link-account"],
-        });
-      });
-    }
-  }, [
-    linkingAcc.isIncomingState,
-    linkingAcc.disconnectStatus.succeeded,
-    linkingAcc.connectStatus.succeeded,
-  ]);
 
   return (
     isAuthenticated && (
@@ -145,13 +162,13 @@ export default function Account() {
                 <Grid item lg={8} md={6} xs={12}>
                   <LinkTdAccount
                     linkingAcc={linkingAcc}
-                    setLinkingAcc={setLinkingAcc}
+                    updateState={updateState}
                   />
                 </Grid>
               </Grid>
               <LinkAccStatusModal
                 linkingAcc={linkingAcc}
-                setLinkingAcc={setLinkingAcc}
+                updateState={updateState}
               />
             </Container>
           </Box>

@@ -16,34 +16,24 @@ import Grid from "@material-ui/core/Grid";
 
 import PropTypes from "prop-types";
 
-export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
-  const [latestAccLinkStatus, setLatestAccLinkStatus] = useState(linkingAcc);
-
-  useEffect(() => {
-    console.log("isTdAccountLinked?: ", linkingAcc.isTdAccountLinked);
-
-    // sync state with latest link status
-    if (latestAccLinkStatus !== linkingAcc) {
-      setLatestAccLinkStatus(linkingAcc);
-    }
-  }, [
-    linkingAcc.isTdAccountLinked,
-    linkingAcc.disconnectStatus,
-    linkingAcc.connectStatus,
-  ]);
+export default function LinkTdAccount({ linkingAcc, updateState }) {
+  console.log("Render LinkTdAccount");
 
   function handleToggle() {
-    if (latestAccLinkStatus.isTdAccountLinked) {
-      setLinkingAcc({
+    console.log("Is connected?: ", linkingAcc.isTdAccountLinked);
+    if (linkingAcc.isTdAccountLinked) {
+      updateState({
         ...linkingAcc,
+        isTdAccountLinked: ((prevState) => !prevState)(),
         disconnectStatus: {
           ...linkingAcc.disconnectStatus,
           attemptingToDisconnect: true,
         },
       });
     } else {
-      setLinkingAcc({
+      updateState({
         ...linkingAcc,
+        isTdAccountLinked: ((prevState) => !prevState)(),
         connectStatus: {
           ...linkingAcc.connectStatus,
           attemptingToLink: true,
@@ -66,7 +56,7 @@ export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
               <FormControlLabel
                 control={
                   <Switch
-                    checked={latestAccLinkStatus.isTdAccountLinked}
+                    checked={linkingAcc.isTdAccountLinked}
                     onChange={handleToggle}
                     name="linkAccount"
                     color="primary"
@@ -74,7 +64,7 @@ export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
                 }
                 label={(() => {
                   // is connected
-                  if (latestAccLinkStatus.isTdAccountLinked) {
+                  if (linkingAcc.isTdAccountLinked) {
                     return (
                       <Grid
                         container
@@ -95,7 +85,7 @@ export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
                     );
                   }
                   // is not connected
-                  else if (!latestAccLinkStatus.isTdAccountLinked) {
+                  else if (!linkingAcc.isTdAccountLinked) {
                     return (
                       <Grid
                         container
@@ -130,7 +120,7 @@ export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
             </Grid>
             {(() => {
               // render action button depending on connection status
-              if (latestAccLinkStatus.isTdAccountLinked) {
+              if (linkingAcc.isTdAccountLinked) {
                 return (
                   <Grid item>
                     <Box
@@ -181,6 +171,6 @@ export default function LinkTdAccount({ linkingAcc, setLinkingAcc }) {
 }
 
 LinkTdAccount.propTypes = {
-  setLinkingAcc: PropTypes.func,
+  updateState: PropTypes.func,
   linkingAcc: PropTypes.object,
 };
