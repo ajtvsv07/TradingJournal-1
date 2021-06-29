@@ -1,5 +1,5 @@
 /* eslint-disable no-else-return */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
@@ -13,9 +13,24 @@ import Switch from "@material-ui/core/Switch";
 import Grid from "@material-ui/core/Grid";
 
 import PropTypes from "prop-types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LinkTdAccount({ linkingAcc, updateState }) {
   console.log("LINKTDACCOUNT component: ", linkingAcc);
+  const { user, getAccessTokenSilently } = useAuth0();
+
+  useEffect(() => {
+    if (linkingAcc.wasModalClosed) {
+      // sync with latest linked status whenever a modal has been closed
+      getAccessTokenSilently({ ignoreCache: true }).then(() => {
+        updateState({
+          ...linkingAcc,
+          isTdAccountLinked: user["https://tradingjournal/link-account"],
+          wasModalClosed: null,
+        });
+      });
+    }
+  }, [linkingAcc.wasModalClosed]);
 
   function handleToggle() {
     if (linkingAcc.isTdAccountLinked) {

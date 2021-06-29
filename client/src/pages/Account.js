@@ -23,6 +23,7 @@ export default function Account() {
     isTdAccountLinked: user["https://tradingjournal/link-account"],
     isIncomingState: Boolean(location.state),
     isModalOpen: false,
+    wasModalClosed: null,
     connectStatus: {
       attemptingToLink: false, // display instructions and details
       linkingInProgress: false, // display in progress message - waiting for user to grant authorization

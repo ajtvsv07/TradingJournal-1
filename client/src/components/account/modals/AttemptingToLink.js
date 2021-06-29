@@ -4,9 +4,6 @@ import PropTypes from "prop-types";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
-import CircularProgress from "@material-ui/core/CircularProgress";
-
-import { useAuth0 } from "@auth0/auth0-react";
 
 import classes from "./modalStyles";
 import ModalDialog from "./ModalDialog";
@@ -16,9 +13,6 @@ import useGetAuthLinkDetails from "../../../utils/useGetAuthLinkDetails";
 
 export default function AttemptingToLink({ linkingAcc, updateState }) {
   const modalStyles = classes();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { user, getAccessTokenSilently } = useAuth0();
 
   const { data: clientToken } = useGetAccessTokenSilently();
   const { data: authLink } = useGetAuthLinkDetails(clientToken);
@@ -42,18 +36,14 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
   }
 
   function handleCloseModal() {
-    setIsLoading(true);
-    // sync with latest linked status - get the latest source of truth from server
-    getAccessTokenSilently({ ignoreCache: true }).then(() => {
-      updateState({
-        ...linkingAcc,
-        isTdAccountLinked: user["https://tradingjournal/link-account"],
-        isModalOpen: ((prevState) => !prevState)(),
-        connectStatus: {
-          ...linkingAcc.connectStatus,
-          attemptingToLink: false,
-        },
-      });
+    updateState({
+      ...linkingAcc,
+      isModalOpen: ((prevState) => !prevState)(),
+      wasModalClosed: true,
+      connectStatus: {
+        ...linkingAcc.connectStatus,
+        attemptingToLink: false,
+      },
     });
   }
 
@@ -93,18 +83,7 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
               contained: modalStyles.grayButton,
             }}
           >
-            {isLoading ? (
-              <div>
-                <CircularProgress
-                  classes={{ root: classes.spinner }}
-                  size={25}
-                  variant="indeterminate"
-                />
-                <Typography>Cancelling...</Typography>
-              </div>
-            ) : (
-              "Cancel"
-            )}
+            Cancel
           </Button>
         </Box>
       }
