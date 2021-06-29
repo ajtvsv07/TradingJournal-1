@@ -14,7 +14,6 @@ import useGetAccessTokenSilently from "../../../utils/useGetAccessTokenSilently"
 
 export default function AttemptingToDisconnect({ updateState, linkingAcc }) {
   const { user } = useAuth0();
-  const [isOpen, setIsOpen] = useState(true);
   const [isDisconnectingProgress, setIsDisconnectingProgress] = useState(false);
   const classes = modalStyles();
 
@@ -50,7 +49,7 @@ export default function AttemptingToDisconnect({ updateState, linkingAcc }) {
     });
   }
 
-  function closeModal() {
+  function handleCloseModal() {
     updateState({
       ...linkingAcc,
       disconnectStatus: {
@@ -58,13 +57,12 @@ export default function AttemptingToDisconnect({ updateState, linkingAcc }) {
         attemptingToDisconnect: false,
       },
     });
-    setIsOpen(false);
   }
 
   return (
     <ModalDialog
-      open={isOpen}
-      close={closeModal}
+      open={linkingAcc.isModalOpen}
+      close={handleCloseModal}
       title="Disconnect your TD Ameritrade account"
       status={`Current connected status is: ${linkingAcc.isTdAccountLinked}`}
       description={
@@ -99,7 +97,7 @@ export default function AttemptingToDisconnect({ updateState, linkingAcc }) {
               contained: classes.grayButton,
             }}
             variant="contained"
-            onClick={closeModal}
+            onClick={handleCloseModal}
           >
             Cancel
           </Button>

@@ -4,6 +4,9 @@ import PropTypes from "prop-types";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
+import CircularProgress from "@material-ui/core/CircularProgress";
+
+import { useAuth0 } from "@auth0/auth0-react";
 
 import classes from "./modalStyles";
 import ModalDialog from "./ModalDialog";
@@ -13,10 +16,14 @@ import useGetAuthLinkDetails from "../../../utils/useGetAuthLinkDetails";
 
 export default function AttemptingToLink({ linkingAcc, updateState }) {
   const modalStyles = classes();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { user, getAccessTokenSilently } = useAuth0();
 
   const { data: clientToken } = useGetAccessTokenSilently();
   const { data: authLink } = useGetAuthLinkDetails(clientToken);
+
+  console.log("ATTEMPTINGTOLINK component rendering: ", linkingAcc);
 
   async function linkTdAccount() {
     // generate td auth link for user authorization
@@ -24,7 +31,6 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
     const baseURl = process.env.REACT_APP_TD_AUTH_BASE_URL;
     const endUrl = process.env.REACT_APP_TD_AUTH_END_URL;
     window.open(`${baseURl + redirectUri}&client_id=${clientId + endUrl}`);
-
     updateState({
       ...linkingAcc,
       connectStatus: {
@@ -35,21 +41,26 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
     });
   }
 
-  function closeModal() {
-    setIsOpen(false);
-    updateState({
-      ...linkingAcc,
-      connectStatus: {
-        ...linkingAcc.connectStatus,
-        attemptingToLink: false,
-      },
+  function handleCloseModal() {
+    setIsLoading(true);
+    // sync with latest linked status - get the latest source of truth from server
+    getAccessTokenSilently({ ignoreCache: true }).then(() => {
+      updateState({
+        ...linkingAcc,
+        isTdAccountLinked: user["https://tradingjournal/link-account"],
+        isModalOpen: ((prevState) => !prevState)(),
+        connectStatus: {
+          ...linkingAcc.connectStatus,
+          attemptingToLink: false,
+        },
+      });
     });
   }
 
   return (
     <ModalDialog
-      open={isOpen}
-      onClose={closeModal}
+      open={linkingAcc.isModalOpen}
+      onClose={handleCloseModal}
       id="attemptingToLink"
       title="Connect your TD Ameritrade Account"
       status="Attempting to link account"
@@ -76,13 +87,24 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
           </Button>
           <Button
             variant="contained"
-            onClick={closeModal}
+            onClick={handleCloseModal}
             classes={{
               root: modalStyles.button,
               contained: modalStyles.grayButton,
             }}
           >
-            Cancel
+            {isLoading ? (
+              <div>
+                <CircularProgress
+                  classes={{ root: classes.spinner }}
+                  size={25}
+                  variant="indeterminate"
+                />
+                <Typography>Cancelling...</Typography>
+              </div>
+            ) : (
+              "Cancel"
+            )}
           </Button>
         </Box>
       }

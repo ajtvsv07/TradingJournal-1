@@ -1,8 +1,6 @@
 /* eslint-disable no-else-return */
 import React, { useEffect, useState } from "react";
 
-import { useAuth0 } from "@auth0/auth0-react";
-
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
 import Card from "@material-ui/core/Card";
@@ -17,14 +15,14 @@ import Grid from "@material-ui/core/Grid";
 import PropTypes from "prop-types";
 
 export default function LinkTdAccount({ linkingAcc, updateState }) {
-  console.log("Render LinkTdAccount");
+  console.log("LINKTDACCOUNT component: ", linkingAcc);
 
   function handleToggle() {
-    console.log("Is connected?: ", linkingAcc.isTdAccountLinked);
     if (linkingAcc.isTdAccountLinked) {
       updateState({
         ...linkingAcc,
         isTdAccountLinked: ((prevState) => !prevState)(),
+        isModalOpen: ((prevState) => !prevState)(),
         disconnectStatus: {
           ...linkingAcc.disconnectStatus,
           attemptingToDisconnect: true,
@@ -34,6 +32,7 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
       updateState({
         ...linkingAcc,
         isTdAccountLinked: ((prevState) => !prevState)(),
+        isModalOpen: ((prevState) => !prevState)(),
         connectStatus: {
           ...linkingAcc.connectStatus,
           attemptingToLink: true,

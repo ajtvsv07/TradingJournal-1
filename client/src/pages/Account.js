@@ -16,11 +16,13 @@ import LinkTdAccount from "../components/account/LinkTdAccount";
 import LinkAccStatusModal from "../components/account/LinkAccStatusModal";
 
 export default function Account() {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { user, isAuthenticated } = useAuth0();
   const location = useLocation();
+
   const [linkingAcc, setLinkingAcc] = useState({
     isTdAccountLinked: user["https://tradingjournal/link-account"],
     isIncomingState: Boolean(location.state),
+    isModalOpen: false,
     connectStatus: {
       attemptingToLink: false, // display instructions and details
       linkingInProgress: false, // display in progress message - waiting for user to grant authorization
@@ -40,72 +42,69 @@ export default function Account() {
       status: null,
     },
   });
-  console.log("Account component rendered: ");
 
-  useEffect(() => {
-    // if incoming url state, render message
-    if (linkingAcc.isIncomingState) {
-      // determine if connect attempt was successful
-      const successCondition = Boolean(location.state.status === "Success!");
+  // useEffect(() => {
+  //   // if incoming url state, render message
+  //   if (linkingAcc.isIncomingState) {
+  //     // determine if connect attempt was successful
+  //     const successCondition = Boolean(location.state.status === "Success!");
 
-      setTimeout(() => {
-        setLinkingAcc({
-          ...linkingAcc,
-          isIncomingState: false,
-          connectStatus: {
-            attemptingToLink: false,
-            linkingInProgress: false,
-            accountLinkAttempted: true,
-            ...(successCondition && { success: true }),
-          },
-          urlLinkState: {
-            message: location.state.message,
-            status: location.state.status,
-          },
-        });
-      }, 800);
-    }
+  //     setTimeout(() => {
+  //       setLinkingAcc({
+  //         ...linkingAcc,
+  //         isIncomingState: false,
+  //         connectStatus: {
+  //           attemptingToLink: false,
+  //           linkingInProgress: false,
+  //           accountLinkAttempted: true,
+  //           ...(successCondition && { success: true }),
+  //         },
+  //         urlLinkState: {
+  //           message: location.state.message,
+  //           status: location.state.status,
+  //         },
+  //       });
+  //     }, 800);
+  //   }
 
-    if (
-      linkingAcc.disconnectStatus.succeeded ||
-      linkingAcc.connectStatus.succeeded
-    ) {
-      // sync with latest linked status
-      getAccessTokenSilently({ ignoreCache: true }).then(() => {
-        setLinkingAcc({
-          ...linkingAcc,
-          isTdAccountLinked: user["https://tradingjournal/link-account"],
-        });
-      });
-    }
+  //   if (
+  //     linkingAcc.disconnectStatus.succeeded ||
+  //     linkingAcc.connectStatus.succeeded
+  //   ) {
+  //     // sync with latest linked status
+  //     getAccessTokenSilently({ ignoreCache: true }).then(() => {
+  //       setLinkingAcc({
+  //         ...linkingAcc,
+  //         isTdAccountLinked: user["https://tradingjournal/link-account"],
+  //       });
+  //     });
+  //   }
 
-    return function cleanup() {
-      setLinkingAcc({
-        ...linkingAcc,
-        isTdAccountLinked: user["https://tradingjournal/link-account"],
-      });
-    };
-  }, [
-    linkingAcc.isIncomingState,
-    linkingAcc.disconnectStatus.succeeded,
-    linkingAcc.connectStatus.succeeded,
-  ]);
+  //   return function cleanup() {
+  //     setLinkingAcc({
+  //       ...linkingAcc,
+  //       isTdAccountLinked: user["https://tradingjournal/link-account"],
+  //     });
+  //   };
+  // }, [
+  //   linkingAcc.isIncomingState,
+  //   linkingAcc.disconnectStatus.succeeded,
+  //   linkingAcc.connectStatus.succeeded,
+  // ]);
 
-  function updateState(arg) {
-    console.log("Passed arg: ", arg);
-    setLinkingAcc(arg);
+  // callback for updating this parent state from child components
+  function updateState(statusFromChild) {
+    console.log("Incoming statusFromChild: ", statusFromChild);
+    setLinkingAcc(statusFromChild);
   }
 
-  // TODO: figure out appropriate way of triggering render update
-  function closeModal(childStatus) {
-    updateState({
-      ...linkingAcc,
-      connectStatus: {
-        ...linkingAcc.connectStatus,
-        attemptingToLink: false,
-      },
-    });
-  }
+  // close children modals
+  // function closeModal(statusFromChild) {
+  //   setLinkingAcc(statusFromChild);
+  //   setIsOpen(false);
+  // }
+
+  console.log("Account state: ", linkingAcc);
 
   // use for React-Error-Boundary
   function ErrorFallback({ error }) {

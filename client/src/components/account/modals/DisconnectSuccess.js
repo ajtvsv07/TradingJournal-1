@@ -9,13 +9,12 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function DisconnectSuccess({ linkingAcc, updateState }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function DisconnectSuccess({ linkingAcc, isOpen, closeModal }) {
   const { user } = useAuth0();
   const classes = modalStyles();
 
-  function closeModal() {
-    updateState({
+  function handleCloseModal() {
+    closeModal({
       ...linkingAcc,
       isTdAccountLinked: user["https://tradingjournal/link-account"],
       disconnectStatus: {
@@ -25,13 +24,12 @@ export default function DisconnectSuccess({ linkingAcc, updateState }) {
         succeeded: true,
       },
     });
-    setIsOpen(false);
   }
 
   return (
     <ModalDialog
       open={isOpen}
-      close={closeModal}
+      close={handleCloseModal}
       title="You've successfully disconnected your account!"
       status={`Connection Status: ${linkingAcc.isTdAccountLinked}`}
       description={
@@ -50,7 +48,7 @@ export default function DisconnectSuccess({ linkingAcc, updateState }) {
               contained: classes.grayButton,
             }}
             variant="contained"
-            onClick={closeModal}
+            onClick={handleCloseModal}
           >
             Close
           </Button>
@@ -62,5 +60,6 @@ export default function DisconnectSuccess({ linkingAcc, updateState }) {
 
 DisconnectSuccess.propTypes = {
   linkingAcc: PropTypes.object,
-  updateState: PropTypes.func,
+  isOpen: PropTypes.bool,
+  closeModal: PropTypes.func,
 };

@@ -7,12 +7,11 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function DisconnectError({ linkingAcc, updateState }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function DisconnectError({ linkingAcc, isOpen, closeModal }) {
   const classes = modalStyles();
 
-  function closeModal() {
-    updateState({
+  function handleCloseModal() {
+    closeModal({
       ...linkingAcc,
       disconnectStatus: {
         ...linkingAcc.disconnectStatus,
@@ -20,13 +19,12 @@ export default function DisconnectError({ linkingAcc, updateState }) {
         message: null,
       },
     });
-    setIsOpen(false);
   }
 
   return (
     <ModalDialog
       open={isOpen}
-      close={closeModal}
+      close={handleCloseModal}
       title="There was an error"
       status={`Account link connection status is: ${linkingAcc.isTdAccountLinked}`}
       description={
@@ -43,7 +41,7 @@ export default function DisconnectError({ linkingAcc, updateState }) {
               contained: classes.grayButton,
             }}
             variant="contained"
-            onClick={closeModal}
+            onClick={handleCloseModal}
           >
             Cancel
           </Button>
@@ -55,5 +53,6 @@ export default function DisconnectError({ linkingAcc, updateState }) {
 
 DisconnectError.propTypes = {
   linkingAcc: PropTypes.object,
-  updateState: PropTypes.func,
+  isOpen: PropTypes.bool,
+  closeModal: PropTypes.func,
 };

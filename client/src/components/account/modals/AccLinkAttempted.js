@@ -7,15 +7,14 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function AccLinkAttempted({ linkingAcc, updateState }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function AccLinkAttempted({ linkingAcc, isOpen, closeModal }) {
   const classes = modalStyles();
 
-  function closeModal() {
+  function handleCloseModal() {
     const successfullyLinked = Boolean(
       linkingAcc.urlLinkState.status === "Success!"
     );
-    updateState({
+    closeModal({
       ...linkingAcc,
       connectStatus: {
         ...linkingAcc.connectStatus,
@@ -23,13 +22,12 @@ export default function AccLinkAttempted({ linkingAcc, updateState }) {
         ...(successfullyLinked && { succeeded: true }),
       },
     });
-    setIsOpen(false);
   }
 
   return (
     <ModalDialog
       open={isOpen}
-      close={closeModal}
+      close={handleCloseModal}
       title="Link TD Ameritrade"
       status={`${linkingAcc.urlLinkState.status}`}
       description={
@@ -56,7 +54,7 @@ export default function AccLinkAttempted({ linkingAcc, updateState }) {
         <Button
           classes={{ button: classes.button }}
           variant="contained"
-          onClick={closeModal}
+          onClick={handleCloseModal}
         >
           Continue
         </Button>
@@ -67,5 +65,6 @@ export default function AccLinkAttempted({ linkingAcc, updateState }) {
 
 AccLinkAttempted.propTypes = {
   linkingAcc: PropTypes.object,
-  updateState: PropTypes.func,
+  isOpen: PropTypes.bool,
+  closeModal: PropTypes.func,
 };
