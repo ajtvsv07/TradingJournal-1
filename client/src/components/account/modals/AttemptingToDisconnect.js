@@ -12,7 +12,7 @@ import ModalDialog from "./ModalDialog";
 import disconnectTdAccount from "../DisconnectTdAccount";
 import useGetAccessTokenSilently from "../../../utils/useGetAccessTokenSilently";
 
-export default function AttemptingToDisconnect({ updateState, linkingAcc }) {
+export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
   const { user } = useAuth0();
   const [isDisconnectingProgress, setIsDisconnectingProgress] = useState(false);
   const classes = modalStyles();
@@ -52,6 +52,8 @@ export default function AttemptingToDisconnect({ updateState, linkingAcc }) {
   function handleCloseModal() {
     updateState({
       ...linkingAcc,
+      isModalOpen: ((prevState) => !prevState)(),
+      wasModalClosed: true,
       disconnectStatus: {
         ...linkingAcc.disconnectStatus,
         attemptingToDisconnect: false,

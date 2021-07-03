@@ -1,9 +1,7 @@
 /* eslint-disable no-else-return */
 import React from "react";
 import PropTypes from "prop-types";
-
 import Box from "@material-ui/core/Box";
-import Typography from "@material-ui/core/Typography";
 
 // import modals
 import AccLinkAttempted from "./modals/AccLinkAttempted";
@@ -14,10 +12,10 @@ import DisconnectSuccess from "./modals/DisconnectSuccess";
 import LinkingInProgress from "./modals/LinkingInProgress";
 
 export default function LinkAccStatusModal({ linkingAcc, updateState }) {
-  console.log(
-    "LinkAccStatusModal is open?: ",
-    linkingAcc.connectStatus.attemptingToLink
-  );
+  // console.log(
+  //   "LinkAccStatusModal is open?: ",
+  //   linkingAcc.connectStatus.attemptingToLink
+  // );
 
   return (
     <Box>
@@ -72,7 +70,7 @@ export default function LinkAccStatusModal({ linkingAcc, updateState }) {
             />
           );
         } else {
-          return <Typography>No Modal triggered</Typography>;
+          return null;
         }
       })()}
     </Box>

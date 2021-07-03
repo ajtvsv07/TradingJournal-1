@@ -1,24 +1,16 @@
-import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { useQuery } from "react-query";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useErrorHandler } from "react-error-boundary";
 
-function saveTokens(tdTokens, tdTokenStatus, clientToken, tdAuthCode) {
-  const [savedTokens, setSavedTokens] = useState({
-    savedTokens: null,
-    savedTokenStatus: "fetching",
-  });
-  const cache = useRef({});
-  const { clientAccessToken, clientTokenStatus } = clientToken;
+function saveTokens(tdTokens, tdTokensError, clientToken, tdAuthCode) {
+  const handleError = useErrorHandler();
   const { user, isAuthenticated } = useAuth0();
 
-  const handleError = useErrorHandler();
-
-  useEffect(() => {
-    // save tokens to database
+  if (!tdTokensError) {
     const saveTdTokens = async () => {
       if (isAuthenticated) {
-        const res = await axios
+        const { data } = await axios
           .post(
             `${process.env.REACT_APP_EXPRESS_API}/tda/updateAccStatusTokens`,
             {
@@ -27,42 +19,32 @@ function saveTokens(tdTokens, tdTokenStatus, clientToken, tdAuthCode) {
               userId: user.sub,
             },
             {
-              headers: { Authorization: `Bearer ${clientAccessToken}` },
+              headers: { Authorization: `Bearer ${clientToken}` },
             }
           )
+          // TODO: errors not displayin through react-error-boundary
           .catch((error) => {
-            throw new Error("Request error: ", error);
+            throw new Error("Save tokens request error: ", error);
           });
-        // handle other errors with react-error-boundary
-        if (!res.data.success) {
-          const error = res.data;
-          handleError(error);
-        } else {
-          // cache response and update state
-          cache.current.savedTokens = res.data;
-          setSavedTokens({
-            savedTokens: res.data,
-            savedTokenStatus: "fetched",
-          });
+
+        // handle specific errors (eventhough req 200) with react-error-boundary
+        if (!data.success) {
+          handleError(data.message);
         }
+        return data;
       }
+      throw new Error(
+        "You are not authenticated to save these tokens. Please login and try again."
+      );
     };
 
-    if (tdTokenStatus === "fetched" && clientTokenStatus === "fetched") {
-      if (cache.current.savedTokens) {
-        const tokens = cache.current.savedTokens;
-        console.log("Cached saved tokens: ", tokens);
-        setSavedTokens({
-          savedTokens: tokens,
-          savedTokenStatus: "fetched",
-        });
-      } else {
-        saveTdTokens();
-      }
-    }
-  }, [tdTokenStatus, clientTokenStatus]);
+    return useQuery("saveTdTokens", () => saveTdTokens(), {
+      // The query will not execute until clientToken exists
+      enabled: !!tdTokens,
+    });
+  }
 
-  return savedTokens;
+  throw new Error("Error: Could not save tokens");
 }
 
 export default saveTokens;

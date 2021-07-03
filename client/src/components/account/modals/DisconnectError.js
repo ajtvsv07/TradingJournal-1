@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 
 import Button from "@material-ui/core/Button";
@@ -7,12 +7,14 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function DisconnectError({ linkingAcc, isOpen, closeModal }) {
+export default function DisconnectError({ linkingAcc, updateState }) {
   const classes = modalStyles();
 
   function handleCloseModal() {
-    closeModal({
+    updateState({
       ...linkingAcc,
+      isModalOpen: ((prevState) => !prevState)(),
+      wasModalClosed: true,
       disconnectStatus: {
         ...linkingAcc.disconnectStatus,
         error: null,
@@ -23,7 +25,7 @@ export default function DisconnectError({ linkingAcc, isOpen, closeModal }) {
 
   return (
     <ModalDialog
-      open={isOpen}
+      open={linkingAcc.isModalOpen}
       close={handleCloseModal}
       title="There was an error"
       status={`Account link connection status is: ${linkingAcc.isTdAccountLinked}`}
@@ -53,6 +55,5 @@ export default function DisconnectError({ linkingAcc, isOpen, closeModal }) {
 
 DisconnectError.propTypes = {
   linkingAcc: PropTypes.object,
-  isOpen: PropTypes.bool,
-  closeModal: PropTypes.func,
+  updateState: PropTypes.func,
 };

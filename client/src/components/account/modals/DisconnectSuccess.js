@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-
-import { useAuth0 } from "@auth0/auth0-react";
 
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -9,14 +7,14 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function DisconnectSuccess({ linkingAcc, isOpen, closeModal }) {
-  const { user } = useAuth0();
+export default function DisconnectSuccess({ linkingAcc, updateState }) {
   const classes = modalStyles();
 
   function handleCloseModal() {
-    closeModal({
+    updateState({
       ...linkingAcc,
-      isTdAccountLinked: user["https://tradingjournal/link-account"],
+      isModalOpen: ((prevState) => !prevState)(),
+      wasModalClosed: true,
       disconnectStatus: {
         ...linkingAcc.disconnectStatus,
         success: null,
@@ -28,7 +26,7 @@ export default function DisconnectSuccess({ linkingAcc, isOpen, closeModal }) {
 
   return (
     <ModalDialog
-      open={isOpen}
+      open={linkingAcc.isModalOpen}
       close={handleCloseModal}
       title="You've successfully disconnected your account!"
       status={`Connection Status: ${linkingAcc.isTdAccountLinked}`}
@@ -60,6 +58,5 @@ export default function DisconnectSuccess({ linkingAcc, isOpen, closeModal }) {
 
 DisconnectSuccess.propTypes = {
   linkingAcc: PropTypes.object,
-  isOpen: PropTypes.bool,
-  closeModal: PropTypes.func,
+  updateState: PropTypes.func,
 };

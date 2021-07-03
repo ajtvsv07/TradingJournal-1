@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 
 import Button from "@material-ui/core/Button";
@@ -16,8 +16,6 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
 
   const { data: clientToken } = useGetAccessTokenSilently();
   const { data: authLink } = useGetAuthLinkDetails(clientToken);
-
-  console.log("ATTEMPTINGTOLINK component rendering: ", linkingAcc);
 
   async function linkTdAccount() {
     // generate td auth link for user authorization

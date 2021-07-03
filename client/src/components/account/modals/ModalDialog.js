@@ -47,11 +47,10 @@ export default function ModalDialog({
   description,
   buttonContent,
   open,
-  id,
 }) {
   const classes = useStyles();
   return (
-    <Dialog aria-labelledby="simple-dialog-title" open={open} id={id}>
+    <Dialog aria-labelledby="simple-dialog-title" open={open}>
       <Box sx={style.box}>
         <Typography
           component="div"
@@ -84,7 +83,6 @@ export default function ModalDialog({
 
 ModalDialog.propTypes = {
   open: PropTypes.bool,
-  id: PropTypes.string,
   title: PropTypes.string,
   status: PropTypes.string,
   description: PropTypes.object,

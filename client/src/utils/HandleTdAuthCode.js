@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useErrorHandler } from "react-error-boundary";
 
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
@@ -31,6 +32,9 @@ const useStyles = makeStyles(() => ({
 // handle incoming response from TD Ameritrade with success or failure
 export default function HandleAmerAuthCode() {
   const classes = useStyles();
+
+  const handleError = useErrorHandler();
+
   const { isAuthenticated } = useAuth0();
 
   const [state, setState] = useState({
@@ -40,27 +44,29 @@ export default function HandleAmerAuthCode() {
   });
 
   // urlDecode auth code
-  const useQuery = () => new URLSearchParams(useLocation().search);
-  const query = useQuery();
-  const tdAuthCode = decodeURIComponent(query.get("code"));
+  const urlAuthCode = () => new URLSearchParams(useLocation().search);
+  const urlQuery = urlAuthCode();
+  const tdAuthCode = decodeURIComponent(urlQuery.get("code"));
 
   // get auth0 client token
-  const { clientToken } = useGetAccessTokenSilently();
+  const { data: clientToken, isError: clientTokenError } =
+    useGetAccessTokenSilently();
 
   // fetch authlink details
-  const { linkDetails, authLinkStatus } = useGetAuthLinkDetails(clientToken);
+  const { data: linkDetails, isError: linkDetailsError } =
+    useGetAuthLinkDetails(clientToken, clientTokenError);
 
   // generate TD tokens
-  const { tdTokens, tdTokenStatus } = useGenerateTdTokens(
+  const { data: tdTokens, isError: tdTokensError } = useGenerateTdTokens(
     linkDetails,
-    authLinkStatus,
+    linkDetailsError,
     tdAuthCode
   );
 
   // save tokens to database
-  const { savedTokens, savedTokenStatus } = useSaveTokens(
+  const { data: savedTokens, isError: savedTokenError } = useSaveTokens(
     tdTokens,
-    tdTokenStatus,
+    tdTokensError,
     clientToken,
     tdAuthCode
   );
@@ -68,9 +74,11 @@ export default function HandleAmerAuthCode() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log({ savedTokens });
+    console.log({ savedTokenError });
     // handle successful response
-    if (savedTokenStatus === "fetched" && savedTokens.success) {
-      // console.log({ savedTokenStatus, savedTokens });
+    if (savedTokens && savedTokens.success) {
+      // console.log({ savedTokens });
       setState({
         ...state,
         statusMessage: "Account Linked!",
@@ -81,7 +89,7 @@ export default function HandleAmerAuthCode() {
           state: { status: "Success!", message: savedTokens.message },
         });
       }, 1500);
-    } else if (savedTokenStatus === "fetched") {
+    } else if (savedTokens && savedTokenError) {
       // handle failure response
       setState({
         ...state,
@@ -94,7 +102,7 @@ export default function HandleAmerAuthCode() {
         });
       }, 1500);
     }
-  }, [savedTokenStatus]);
+  }, [savedTokens]);
 
   // TODO: Keep track of the time limit on the refresh token (90 days), and access token (30 min)
   // TODO: exchange token for new version before it expires
@@ -114,20 +122,14 @@ export default function HandleAmerAuthCode() {
         >
           <Container maxWidth="lg">
             <div className={classes.center}>
+              {state.isLoading ? <CircularProgress /> : ""}
+              <Typography variant="h4">Linking Your Account</Typography>
               <Grid container>
                 <Grid item className={classes.spacer}>
                   <Typography>Stay Put, almost done!</Typography>
                 </Grid>
               </Grid>
-              {state.isLoading ? (
-                <CircularProgress classes={classes.spacer} />
-              ) : (
-                ""
-              )}
-              <Typography variant="h6" className={classes.spacer}>
-                {state.statusMessage}
-              </Typography>
-              <Typography variant="h4">Linking Your Account</Typography>
+              <Typography variant="h6">{state.statusMessage}</Typography>
             </div>
           </Container>
         </Box>

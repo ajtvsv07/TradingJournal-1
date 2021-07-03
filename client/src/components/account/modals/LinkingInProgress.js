@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 
 import Button from "@material-ui/core/Button";
@@ -7,12 +7,14 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function LinkingInProgress({ linkingAcc, isOpen, closeModal }) {
+export default function LinkingInProgress({ linkingAcc, updateState }) {
   const classes = modalStyles();
 
   function handleCloseModal() {
-    closeModal({
+    updateState({
       ...linkingAcc,
+      isModalOpen: ((prevState) => !prevState)(),
+      wasModalClosed: true,
       connectStatus: {
         ...linkingAcc.connectStatus,
         linkingInProgress: false,
@@ -22,7 +24,7 @@ export default function LinkingInProgress({ linkingAcc, isOpen, closeModal }) {
 
   return (
     <ModalDialog
-      open={isOpen}
+      open={linkingAcc.isModalOpen}
       close={handleCloseModal}
       title="Account linking in progress..."
       status="Waiting on TD Ameritrade authorization"
@@ -53,6 +55,5 @@ export default function LinkingInProgress({ linkingAcc, isOpen, closeModal }) {
 
 LinkingInProgress.propTypes = {
   linkingAcc: PropTypes.object,
-  isOpen: PropTypes.bool,
-  closeModal: PropTypes.func,
+  updateState: PropTypes.func,
 };

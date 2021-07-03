@@ -16,7 +16,6 @@ import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LinkTdAccount({ linkingAcc, updateState }) {
-  console.log("LINKTDACCOUNT component: ", linkingAcc);
   const { user, getAccessTokenSilently } = useAuth0();
 
   useEffect(() => {

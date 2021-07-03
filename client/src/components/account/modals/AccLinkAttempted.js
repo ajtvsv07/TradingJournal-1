@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 
 import Button from "@material-ui/core/Button";
@@ -7,15 +7,17 @@ import Typography from "@material-ui/core/Typography";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-export default function AccLinkAttempted({ linkingAcc, isOpen, closeModal }) {
+export default function AccLinkAttempted({ linkingAcc, updateState }) {
   const classes = modalStyles();
 
   function handleCloseModal() {
     const successfullyLinked = Boolean(
       linkingAcc.urlLinkState.status === "Success!"
     );
-    closeModal({
+    updateState({
       ...linkingAcc,
+      isModalOpen: ((prevState) => !prevState)(),
+      wasModalClosed: true,
       connectStatus: {
         ...linkingAcc.connectStatus,
         accountLinkAttempted: false,
@@ -26,7 +28,7 @@ export default function AccLinkAttempted({ linkingAcc, isOpen, closeModal }) {
 
   return (
     <ModalDialog
-      open={isOpen}
+      open={linkingAcc.isModalOpen}
       close={handleCloseModal}
       title="Link TD Ameritrade"
       status={`${linkingAcc.urlLinkState.status}`}
@@ -65,6 +67,5 @@ export default function AccLinkAttempted({ linkingAcc, isOpen, closeModal }) {
 
 AccLinkAttempted.propTypes = {
   linkingAcc: PropTypes.object,
-  isOpen: PropTypes.bool,
-  closeModal: PropTypes.func,
+  updateState: PropTypes.func,
 };
