@@ -1,36 +1,38 @@
 import axios from "axios";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useQuery } from "react-query";
+import useGetAccessTokenSilently from "../../utils/useGetAccessTokenSilently";
 
-export default function disconnectTdAccount(user, clientToken) {
-  const { clientAccessToken, clientTokenStatus } = clientToken;
+export default function disconnectTdAccount() {
+  const { user } = useAuth0();
+  const { data: clientToken } = useGetAccessTokenSilently();
   const userId = user.sub;
 
-  return new Promise((resolve, reject) => {
-    const runDisconnect = async () => {
-      // call server
-      const res = await axios.post(
-        `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
-        {
-          data: {
-            user: userId,
-          },
+  const runDisconnect = async () => {
+    const { data } = await axios.post(
+      `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
+      {
+        data: {
+          user: userId,
         },
-        {
-          headers: { Authorization: `Bearer ${clientAccessToken}` },
-        }
-      );
-      if (res.data.error) {
-        reject(res.data.error);
+      },
+      {
+        headers: { Authorization: `Bearer ${clientToken}` },
       }
+    );
 
-      resolve(res.data);
-    };
-
-    // ensure tokens are valid to make request
-    if (clientTokenStatus === "fetched") {
-      runDisconnect();
-    } else {
-      // eslint-disable-next-line prefer-promise-reject-errors
-      reject("Valid client tokens not found. Please try again later");
+    if (data.error) {
+      throw new Error(
+        "There was an errror in disconnecting from server: ",
+        data.error.message
+      );
     }
+
+    return data;
+  };
+
+  return useQuery("runDisconnect", () => runDisconnect(), {
+    // The query will not execute until clientToken exists
+    enabled: !!clientToken,
   });
 }

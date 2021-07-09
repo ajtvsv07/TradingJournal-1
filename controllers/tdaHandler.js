@@ -58,7 +58,6 @@ module.exports = {
       // console.log("Validation Error: ", error.details[0]);
       sendErrorToClient(error.details[0].message);
     } else if (value) {
-      console.log("Logging validated req value: ", value);
       // salt and hash string and object values
       hashPayload(value).then((hashedPayload) => {
         // create new model

@@ -4,16 +4,16 @@ import { useQuery } from "react-query";
 function getAuthLinkDetails(clientToken, clientTokenError) {
   if (!clientTokenError) {
     const fetchDetails = async () => {
-      const { data } = await axios
-        .get(
-          `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`,
-          {
-            headers: { Authorization: `Bearer ${clientToken}` },
-          }
-        )
-        .catch((error) => {
-          throw new Error("Unable to generate tokens:", error.message);
-        });
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`,
+        {
+          headers: { Authorization: `Bearer ${clientToken}` },
+        }
+      );
+
+      if (data.error) {
+        throw new Error("Unable to generate tokens:", data.error.message);
+      }
 
       return data;
     };

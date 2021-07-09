@@ -1,5 +1,5 @@
 /* eslint-disable no-else-return */
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
@@ -16,16 +16,16 @@ import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LinkTdAccount({ linkingAcc, updateState }) {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently, isLoading, error } = useAuth0();
 
   useEffect(() => {
-    if (linkingAcc.wasModalClosed) {
+    if (linkingAcc.wasModalClosed && !isLoading && !error) {
       // sync with latest linked status whenever a modal has been closed
       getAccessTokenSilently({ ignoreCache: true }).then(() => {
         updateState({
           ...linkingAcc,
           isTdAccountLinked: user["https://tradingjournal/link-account"],
-          wasModalClosed: null,
+          wasModalClosed: "true", // string allows for UI refresh - but Boolean doesn't - Might have to do with Material UI
         });
       });
     }

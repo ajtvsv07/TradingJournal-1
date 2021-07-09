@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { useAuth0 } from "@auth0/auth0-react";
 
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -9,27 +8,26 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-import disconnectTdAccount from "../DisconnectTdAccount";
-import useGetAccessTokenSilently from "../../../utils/useGetAccessTokenSilently";
+import useDisconnectTdAccount from "../DisconnectTdAccount";
 
 export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
-  const { user } = useAuth0();
   const [isDisconnectingProgress, setIsDisconnectingProgress] = useState(false);
   const classes = modalStyles();
-
-  const { data: clientToken } = useGetAccessTokenSilently();
+  const { data: disconnectResponse, isLoading } = useDisconnectTdAccount();
 
   function disconnectAccount() {
     setIsDisconnectingProgress(true);
-    disconnectTdAccount(user, clientToken).then((response) => {
+
+    if (!isLoading && disconnectResponse) {
       // display error in new modal
-      if (!response.success) {
+      if (!disconnectResponse.success) {
         updateState({
           ...linkingAcc,
           disconnectStatus: {
+            ...linkingAcc.disconnectStatus,
             attemptingToDisconnect: false,
             error: true,
-            message: response.message,
+            message: disconnectResponse.message,
           },
         });
         setIsDisconnectingProgress(false);
@@ -41,12 +39,12 @@ export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
             ...linkingAcc.disconnectStatus,
             attemptingToDisconnect: false,
             success: true,
-            message: response.message,
+            message: disconnectResponse.message,
           },
         });
         setIsDisconnectingProgress(false);
       }
-    });
+    }
   }
 
   function handleCloseModal() {

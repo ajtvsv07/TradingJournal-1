@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
@@ -12,20 +12,19 @@ import LinkTdAccount from "../components/account/LinkTdAccount";
 import LinkAccStatusModal from "../components/account/LinkAccStatusModal";
 
 export default function Account() {
-  const { user, getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { user, isAuthenticated } = useAuth0();
   const location = useLocation();
+  const isIncomingState = Boolean(location.state);
 
   const [linkingAcc, setLinkingAcc] = useState({
     isTdAccountLinked: user["https://tradingjournal/link-account"],
-    isIncomingState: Boolean(location.state),
     isModalOpen: false,
     wasModalClosed: null,
     connectStatus: {
       attemptingToLink: false, // display instructions and details
       linkingInProgress: false, // display in progress message - waiting for user to grant authorization
-      accountLinkAttempted: false, // display result message - either success or error
+      accountLinkAttempted: null, // used to display modal
       success: null, // display success confirmation message
-      succeeded: null, // determine refresh of link state
     },
     disconnectStatus: {
       attemptingToDisconnect: false, // display instructions and details
@@ -41,52 +40,38 @@ export default function Account() {
   });
 
   useEffect(() => {
-    console.log("isIncomingState ?: ", linkingAcc.isIncomingState);
-    // if incoming url state, render message
-    if (linkingAcc.isIncomingState) {
-      // determine if connect attempt was successful
-      const successCondition = Boolean(location.state.status === "Success!");
-
-      setTimeout(() => {
-        setLinkingAcc({
-          ...linkingAcc,
-          isIncomingState: false,
-          connectStatus: {
-            attemptingToLink: false,
-            linkingInProgress: false,
-            accountLinkAttempted: true,
-            ...(successCondition && { success: true }),
-          },
-          urlLinkState: {
-            message: location.state.message,
-            status: location.state.status,
-          },
-        });
-      }, 800);
-    }
-
-    if (
-      linkingAcc.disconnectStatus.succeeded ||
-      linkingAcc.connectStatus.succeeded
-    ) {
-      // sync with latest linked status
-      getAccessTokenSilently({ ignoreCache: true }).then(() => {
-        setLinkingAcc({
-          ...linkingAcc,
-          isTdAccountLinked: user["https://tradingjournal/link-account"],
-        });
-      });
-    }
-
-    return function cleanup() {
+    // connected account successfully
+    if (isIncomingState && location.state.status === "Success!") {
       setLinkingAcc({
         ...linkingAcc,
-        isTdAccountLinked: user["https://tradingjournal/link-account"],
+        isModalOpen: true,
+        connectStatus: {
+          attemptingToLink: false,
+          linkingInProgress: false,
+          accountLinkAttempted: true,
+          success: true,
+        },
+        urlLinkState: {
+          message: location.state.message,
+          status: location.state.status,
+        },
       });
-    };
+      // connection failed
+    } else if (isIncomingState) {
+      // handle fail
+    }
+
+    return null;
+
+    // return function cleanup() {
+    //   setLinkingAcc({
+    //     ...linkingAcc,
+    //     isTdAccountLinked: user["https://tradingjournal/link-account"],
+    //   });
+    // };
 
     // TODO: app is rerendering too much on this useEffect - FIX
-  }, []);
+  }, [isIncomingState]);
 
   // callback for updating this parent state from child components
   function updateState(statusFromChild) {

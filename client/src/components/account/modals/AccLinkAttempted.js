@@ -11,17 +11,13 @@ export default function AccLinkAttempted({ linkingAcc, updateState }) {
   const classes = modalStyles();
 
   function handleCloseModal() {
-    const successfullyLinked = Boolean(
-      linkingAcc.urlLinkState.status === "Success!"
-    );
     updateState({
       ...linkingAcc,
-      isModalOpen: ((prevState) => !prevState)(),
+      isModalOpen: false,
       wasModalClosed: true,
       connectStatus: {
         ...linkingAcc.connectStatus,
-        accountLinkAttempted: false,
-        ...(successfullyLinked && { succeeded: true }),
+        accountLinkAttempted: false, // needs to be a Bool
       },
     });
   }
