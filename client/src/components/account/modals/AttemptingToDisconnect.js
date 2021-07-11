@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useMutation } from "react-query";
 import PropTypes from "prop-types";
 
 import Button from "@material-ui/core/Button";
@@ -8,55 +11,84 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-import useDisconnectTdAccount from "../DisconnectTdAccount";
+import useGetAccessTokenSilently from "../../../utils/useGetAccessTokenSilently";
 
 export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
   const [isDisconnectingProgress, setIsDisconnectingProgress] = useState(false);
+  const { data: clientToken } = useGetAccessTokenSilently();
   const classes = modalStyles();
-  const { data: disconnectResponse, isLoading } = useDisconnectTdAccount();
+  const { user, getAccessTokenSilently } = useAuth0();
+  const userId = user.sub;
 
-  function disconnectAccount() {
-    setIsDisconnectingProgress(true);
-
-    if (!isLoading && disconnectResponse) {
-      // display error in new modal
-      if (!disconnectResponse.success) {
-        updateState({
-          ...linkingAcc,
-          disconnectStatus: {
-            ...linkingAcc.disconnectStatus,
-            attemptingToDisconnect: false,
-            error: true,
-            message: disconnectResponse.message,
-          },
-        });
-        setIsDisconnectingProgress(false);
-      } else {
-        // display success in new modal
-        updateState({
-          ...linkingAcc,
-          disconnectStatus: {
-            ...linkingAcc.disconnectStatus,
-            attemptingToDisconnect: false,
-            success: true,
-            message: disconnectResponse.message,
-          },
-        });
-        setIsDisconnectingProgress(false);
-      }
-    }
-  }
+  getAccessTokenSilently({ ignoreCache: true });
 
   function handleCloseModal() {
     updateState({
       ...linkingAcc,
-      isModalOpen: ((prevState) => !prevState)(),
-      wasModalClosed: true,
+      isTdAccountLinked: user["https://tradingjournal/link-account"],
+      isModalOpen: false,
       disconnectStatus: {
         ...linkingAcc.disconnectStatus,
         attemptingToDisconnect: false,
       },
     });
+  }
+
+  const { isLoading, isError, mutateAsync } = useMutation(() =>
+    axios.post(
+      `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
+      {
+        data: {
+          user: userId,
+        },
+      },
+      {
+        headers: { Authorization: `Bearer ${clientToken}` },
+      }
+    )
+  );
+
+  async function disconnectAccount() {
+    setIsDisconnectingProgress(true);
+    if (!isLoading && !isError) {
+      mutateAsync({ userId, clientToken })
+        .then((result) => {
+          console.log("Disconnect res from mutation: ", result);
+          // get the latest isLinked state
+          if (result.data.success) {
+            setIsDisconnectingProgress(false);
+            // display success message in new modal
+            updateState({
+              ...linkingAcc,
+              isTdAccountLinked: user["https://tradingjournal/link-account"],
+              disconnectStatus: {
+                ...linkingAcc.disconnectStatus,
+                attemptingToDisconnect: false,
+                success: true,
+                message: result.data.message,
+              },
+            });
+          } else {
+            setIsDisconnectingProgress(false);
+            // display error in new modal
+            updateState({
+              ...linkingAcc,
+              isTdAccountLinked: user["https://tradingjournal/link-account"],
+              disconnectStatus: {
+                ...linkingAcc.disconnectStatus,
+                attemptingToDisconnect: false,
+                error: true,
+                message: result.data.message,
+              },
+            });
+          }
+        })
+        .catch((error) => {
+          throw new Error(
+            `There was a network connection error: ${error}. Please try again later.`
+          );
+        });
+    }
   }
 
   return (

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { useErrorHandler } from "react-error-boundary";
 
 import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
@@ -32,11 +31,8 @@ const useStyles = makeStyles(() => ({
 // handle incoming response from TD Ameritrade with success or failure
 export default function HandleAmerAuthCode() {
   const classes = useStyles();
-
-  const handleError = useErrorHandler();
-
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth0();
-
   const [state, setState] = useState({
     error: null,
     isLoading: true,
@@ -71,11 +67,7 @@ export default function HandleAmerAuthCode() {
     tdAuthCode
   );
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    console.log({ savedTokens });
-    console.log({ savedTokenError });
     // handle successful response
     if (savedTokens && savedTokens.success) {
       // console.log({ savedTokens });

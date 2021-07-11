@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
@@ -19,7 +19,6 @@ export default function Account() {
   const [linkingAcc, setLinkingAcc] = useState({
     isTdAccountLinked: user["https://tradingjournal/link-account"],
     isModalOpen: false,
-    wasModalClosed: null,
     connectStatus: {
       attemptingToLink: false, // display instructions and details
       linkingInProgress: false, // display in progress message - waiting for user to grant authorization
@@ -31,7 +30,6 @@ export default function Account() {
       error: null, // display error modal
       message: null, // display server message
       success: null, // display success confirmation message
-      succeeded: null, // determine refresh of link state
     },
     urlLinkState: {
       message: null,
@@ -58,7 +56,20 @@ export default function Account() {
       });
       // connection failed
     } else if (isIncomingState) {
-      // handle fail
+      setLinkingAcc({
+        ...linkingAcc,
+        isModalOpen: true,
+        connectStatus: {
+          attemptingToLink: false,
+          linkingInProgress: false,
+          accountLinkAttempted: true,
+          success: false,
+        },
+        urlLinkState: {
+          message: location.state.message,
+          status: location.state.status,
+        },
+      });
     }
 
     return null;
@@ -69,8 +80,6 @@ export default function Account() {
     //     isTdAccountLinked: user["https://tradingjournal/link-account"],
     //   });
     // };
-
-    // TODO: app is rerendering too much on this useEffect - FIX
   }, [isIncomingState]);
 
   // callback for updating this parent state from child components

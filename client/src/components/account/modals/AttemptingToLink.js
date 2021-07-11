@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
@@ -13,6 +14,7 @@ import useGetAuthLinkDetails from "../../../utils/useGetAuthLinkDetails";
 
 export default function AttemptingToLink({ linkingAcc, updateState }) {
   const modalStyles = classes();
+  const { user, getAccessTokenSilently } = useAuth0();
 
   const { data: clientToken } = useGetAccessTokenSilently();
   const { data: authLink } = useGetAuthLinkDetails(clientToken);
@@ -33,11 +35,13 @@ export default function AttemptingToLink({ linkingAcc, updateState }) {
     });
   }
 
+  getAccessTokenSilently({ ignoreCache: true });
+
   function handleCloseModal() {
     updateState({
       ...linkingAcc,
-      isModalOpen: ((prevState) => !prevState)(),
-      wasModalClosed: true,
+      isTdAccountLinked: user["https://tradingjournal/link-account"],
+      isModalOpen: false,
       connectStatus: {
         ...linkingAcc.connectStatus,
         attemptingToLink: false,

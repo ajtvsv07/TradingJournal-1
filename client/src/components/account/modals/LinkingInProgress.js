@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -9,12 +10,16 @@ import ModalDialog from "./ModalDialog";
 
 export default function LinkingInProgress({ linkingAcc, updateState }) {
   const classes = modalStyles();
+  const { user, getAccessTokenSilently } = useAuth0();
+
+  // get latest isLinked State from auth0
+  getAccessTokenSilently({ ignoreCache: true });
 
   function handleCloseModal() {
     updateState({
       ...linkingAcc,
-      isModalOpen: ((prevState) => !prevState)(),
-      wasModalClosed: true,
+      isTdAccountLinked: user["https://tradingjournal/link-account"],
+      isModalOpen: false,
       connectStatus: {
         ...linkingAcc.connectStatus,
         linkingInProgress: false,

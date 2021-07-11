@@ -1,5 +1,5 @@
 /* eslint-disable no-else-return */
-import React, { useEffect } from "react";
+import React from "react";
 
 import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
@@ -13,25 +13,10 @@ import Switch from "@material-ui/core/Switch";
 import Grid from "@material-ui/core/Grid";
 
 import PropTypes from "prop-types";
-import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LinkTdAccount({ linkingAcc, updateState }) {
-  const { user, getAccessTokenSilently, isLoading, error } = useAuth0();
-
-  useEffect(() => {
-    if (linkingAcc.wasModalClosed && !isLoading && !error) {
-      // sync with latest linked status whenever a modal has been closed
-      getAccessTokenSilently({ ignoreCache: true }).then(() => {
-        updateState({
-          ...linkingAcc,
-          isTdAccountLinked: user["https://tradingjournal/link-account"],
-          wasModalClosed: "true", // string allows for UI refresh - but Boolean doesn't - Might have to do with Material UI
-        });
-      });
-    }
-  }, [linkingAcc.wasModalClosed]);
-
   function handleToggle() {
+    // account is linked - trying to disconnect
     if (linkingAcc.isTdAccountLinked) {
       updateState({
         ...linkingAcc,
@@ -43,6 +28,11 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
         },
       });
     } else {
+      console.log(
+        "ACC was NOT linked - trying to connect. Latest linked status",
+        linkingAcc.isTdAccountLinked
+      );
+      // account is not linked - trying to connect
       updateState({
         ...linkingAcc,
         isTdAccountLinked: ((prevState) => !prevState)(),
@@ -76,7 +66,7 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
                   />
                 }
                 label={(() => {
-                  // is connected
+                  // account is connected - toggle switch label
                   if (linkingAcc.isTdAccountLinked) {
                     return (
                       <Grid
@@ -97,7 +87,7 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
                       </Grid>
                     );
                   }
-                  // is not connected
+                  // account not connected - toggle switch label
                   else if (!linkingAcc.isTdAccountLinked) {
                     return (
                       <Grid
@@ -118,7 +108,7 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
                       </Grid>
                     );
                   }
-                  // in the process of disconnecting
+                  // in the process of disconnecting - toggle switch label
                   else {
                     return (
                       <div>
@@ -133,6 +123,7 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
             </Grid>
             {(() => {
               // render action button depending on connection status
+              // if account is linked, display option to disconnect
               if (linkingAcc.isTdAccountLinked) {
                 return (
                   <Grid item>
@@ -154,7 +145,7 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
                   </Grid>
                 );
               } else {
-                // is not connected
+                // if account is not linked - display option to connect
                 return (
                   <Grid item>
                     <Box

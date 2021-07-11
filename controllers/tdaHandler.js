@@ -80,7 +80,7 @@ module.exports = {
                 // update management API account link status
                 updateManagementApi(userId, apiToken, linked)
                   .then((result) => {
-                    // send results to the client
+                    // send confirmation to the client
                     res.send({
                       success: true,
                       message: "Your account has been successfully linked!",
@@ -128,8 +128,6 @@ module.exports = {
     // delete user's post access token credentials
     deleteAccessCreds
       .then((resolved) => {
-        console.log("Deleted Credentials: ", resolved);
-
         // get token to communicate with management api
         getManagementApi()
           .then((response) => {
@@ -142,7 +140,6 @@ module.exports = {
                 // send results to the client
                 res.send({
                   success: true,
-                  data: result,
                   message: "Your account has been disconnected",
                 });
               })
