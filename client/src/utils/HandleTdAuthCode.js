@@ -10,7 +10,6 @@ import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import useGetAccessTokenSilently from "./useGetAccessTokenSilently";
 import useGetAuthLinkDetails from "./useGetAuthLinkDetails";
 import useGenerateTdTokens from "./useGenerateTdTokens";
 import useSaveTokens from "./useSaveTokens";
@@ -44,17 +43,21 @@ export default function HandleAmerAuthCode() {
   const urlQuery = urlAuthCode();
   const tdAuthCode = decodeURIComponent(urlQuery.get("code"));
 
-  // get auth0 client token
-  const { data: clientToken, isError: clientTokenError } =
-    useGetAccessTokenSilently();
-
   // fetch authlink details
-  const { data: linkDetails, isError: linkDetailsError } =
-    useGetAuthLinkDetails(clientToken, clientTokenError);
+  const {
+    data: linkDetails,
+    isLoading: linkDetailsLoading,
+    isError: linkDetailsError,
+  } = useGetAuthLinkDetails();
 
   // generate TD tokens
-  const { data: tdTokens, isError: tdTokensError } = useGenerateTdTokens(
+  const {
+    data: tdTokens,
+    isLoading: tdTokensLoading,
+    isError: tdTokensError,
+  } = useGenerateTdTokens(
     linkDetails,
+    linkDetailsLoading,
     linkDetailsError,
     tdAuthCode
   );
@@ -62,8 +65,8 @@ export default function HandleAmerAuthCode() {
   // save tokens to database
   const { data: savedTokens, isError: savedTokenError } = useSaveTokens(
     tdTokens,
+    tdTokensLoading,
     tdTokensError,
-    clientToken,
     tdAuthCode
   );
 
@@ -81,11 +84,12 @@ export default function HandleAmerAuthCode() {
           state: { status: "Success!", message: savedTokens.message },
         });
       }, 1500);
-    } else if (savedTokens && savedTokenError) {
+    } else if (savedTokens && !savedTokens.success) {
+      console.log("Logging all of savedTokens: ", savedTokens);
       // handle failure response
       setState({
         ...state,
-        statusMessage: "Linking Error",
+        statusMessage: "Linking Error :(",
       });
       setTimeout(() => {
         navigate("/app/account", {
@@ -117,7 +121,7 @@ export default function HandleAmerAuthCode() {
               {state.isLoading ? <CircularProgress /> : ""}
               <Typography variant="h4">Linking Your Account</Typography>
               <Grid container>
-                <Grid item className={classes.spacer}>
+                <Grid item>
                   <Typography>Stay Put, almost done!</Typography>
                 </Grid>
               </Grid>

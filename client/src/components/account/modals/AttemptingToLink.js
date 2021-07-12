@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import axios from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 
 import Button from "@material-ui/core/Button";
@@ -9,33 +10,39 @@ import Typography from "@material-ui/core/Typography";
 import classes from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-import useGetAccessTokenSilently from "../../../utils/useGetAccessTokenSilently";
-import useGetAuthLinkDetails from "../../../utils/useGetAuthLinkDetails";
-
 export default function AttemptingToLink({ linkingAcc, updateState }) {
   const modalStyles = classes();
   const { user, getAccessTokenSilently } = useAuth0();
 
-  const { data: clientToken } = useGetAccessTokenSilently();
-  const { data: authLink } = useGetAuthLinkDetails(clientToken);
-
   async function linkTdAccount() {
-    // generate td auth link for user authorization
-    const { clientId, redirectUri } = await authLink.payload;
-    const baseURl = process.env.REACT_APP_TD_AUTH_BASE_URL;
-    const endUrl = process.env.REACT_APP_TD_AUTH_END_URL;
-    window.open(`${baseURl + redirectUri}&client_id=${clientId + endUrl}`);
-    updateState({
-      ...linkingAcc,
-      connectStatus: {
-        ...linkingAcc.connectStatus,
-        attemptingToLink: false,
-        linkingInProgress: true,
-      },
+    getAccessTokenSilently().then(async (clientToken) => {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`,
+        {
+          headers: { Authorization: `Bearer ${clientToken}` },
+        }
+      );
+
+      if (data.error) {
+        throw new Error("Unable to generate tokens:", data.error.message);
+      }
+
+      // generate td auth link for user authorization
+      const { clientId, redirectUri } = data.payload;
+      const baseURl = process.env.REACT_APP_TD_AUTH_BASE_URL;
+      const endUrl = process.env.REACT_APP_TD_AUTH_END_URL;
+      const uri = encodeURIComponent(redirectUri);
+      window.open(`${baseURl + uri}&client_id=${clientId + endUrl}`);
+      updateState({
+        ...linkingAcc,
+        connectStatus: {
+          ...linkingAcc.connectStatus,
+          attemptingToLink: false,
+          linkingInProgress: true,
+        },
+      });
     });
   }
-
-  getAccessTokenSilently({ ignoreCache: true });
 
   function handleCloseModal() {
     updateState({

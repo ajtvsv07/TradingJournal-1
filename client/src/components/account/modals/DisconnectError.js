@@ -10,9 +10,7 @@ import ModalDialog from "./ModalDialog";
 
 export default function DisconnectError({ linkingAcc, updateState }) {
   const classes = modalStyles();
-  const { user, getAccessTokenSilently } = useAuth0();
-
-  getAccessTokenSilently({ ignoreCache: true });
+  const { user } = useAuth0();
 
   function handleCloseModal() {
     updateState({
@@ -36,7 +34,8 @@ export default function DisconnectError({ linkingAcc, updateState }) {
       description={
         <Typography>
           {`${linkingAcc.disconnectStatus.message}. \n`}
-          Please hit cancel and try again later.
+          Please contact the site admin with a screenshot or notice of this
+          error.
         </Typography>
       }
       buttonContent={

@@ -11,16 +11,11 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import modalStyles from "./modalStyles";
 import ModalDialog from "./ModalDialog";
 
-import useGetAccessTokenSilently from "../../../utils/useGetAccessTokenSilently";
-
 export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
   const [isDisconnectingProgress, setIsDisconnectingProgress] = useState(false);
-  const { data: clientToken } = useGetAccessTokenSilently();
   const classes = modalStyles();
   const { user, getAccessTokenSilently } = useAuth0();
   const userId = user.sub;
-
-  getAccessTokenSilently({ ignoreCache: true });
 
   function handleCloseModal() {
     updateState({
@@ -34,61 +29,67 @@ export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
     });
   }
 
-  const { isLoading, isError, mutateAsync } = useMutation(() =>
-    axios.post(
-      `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
-      {
-        data: {
-          user: userId,
+  const { isLoading, isError, mutateAsync } = useMutation((id) =>
+    getAccessTokenSilently().then(async (clientToken) => {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
+        {
+          data: {
+            user: id,
+          },
         },
-      },
-      {
-        headers: { Authorization: `Bearer ${clientToken}` },
-      }
-    )
+        {
+          headers: { Authorization: `Bearer ${clientToken}` },
+        }
+      );
+      return data;
+    })
   );
 
   async function disconnectAccount() {
     setIsDisconnectingProgress(true);
-    if (!isLoading && !isError) {
-      mutateAsync({ userId, clientToken })
-        .then((result) => {
-          console.log("Disconnect res from mutation: ", result);
+    mutateAsync(userId)
+      .then((result) => {
+        if (!isLoading && !isError) {
           // get the latest isLinked state
-          if (result.data.success) {
+          if (result.success) {
             setIsDisconnectingProgress(false);
             // display success message in new modal
-            updateState({
-              ...linkingAcc,
-              isTdAccountLinked: user["https://tradingjournal/link-account"],
-              disconnectStatus: {
-                ...linkingAcc.disconnectStatus,
-                attemptingToDisconnect: false,
-                success: true,
-                message: result.data.message,
-              },
+            getAccessTokenSilently({ ignoreCache: true }).then(() => {
+              updateState({
+                ...linkingAcc,
+                isTdAccountLinked: user["https://tradingjournal/link-account"],
+                disconnectStatus: {
+                  ...linkingAcc.disconnectStatus,
+                  attemptingToDisconnect: false,
+                  success: true,
+                  message: result.message,
+                },
+              });
             });
           } else {
             setIsDisconnectingProgress(false);
             // display error in new modal
-            updateState({
-              ...linkingAcc,
-              isTdAccountLinked: user["https://tradingjournal/link-account"],
-              disconnectStatus: {
-                ...linkingAcc.disconnectStatus,
-                attemptingToDisconnect: false,
-                error: true,
-                message: result.data.message,
-              },
+            getAccessTokenSilently({ ignoreCache: true }).then(() => {
+              updateState({
+                ...linkingAcc,
+                isTdAccountLinked: user["https://tradingjournal/link-account"],
+                disconnectStatus: {
+                  ...linkingAcc.disconnectStatus,
+                  attemptingToDisconnect: false,
+                  error: true,
+                  message: result.message,
+                },
+              });
             });
           }
-        })
-        .catch((error) => {
-          throw new Error(
-            `There was a network connection error: ${error}. Please try again later.`
-          );
-        });
-    }
+        }
+      })
+      .catch((error) => {
+        throw new Error(
+          `There was a network connection error: ${error}. Please try again later.`
+        );
+      });
   }
 
   return (

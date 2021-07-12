@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -12,8 +12,8 @@ export default function AccLinkAttempted({ linkingAcc, updateState }) {
   const classes = modalStyles();
   const { user, getAccessTokenSilently } = useAuth0();
 
-  // get latest isLinked State from auth0
-  getAccessTokenSilently({ ignoreCache: true });
+  // refresh ui after server update
+  useMemo(() => getAccessTokenSilently({ ignoreCache: true }), []);
 
   function handleCloseModal() {
     updateState({
@@ -46,7 +46,7 @@ export default function AccLinkAttempted({ linkingAcc, updateState }) {
                 return `${linkingAcc.urlLinkState.message}. Navigate to your dashboard screen to see your latest transactions`;
               }
               if (linkingAcc.urlLinkState.status === "Error") {
-                return `There was a problem linking your account. ${linkingAcc.urlLinkState.message} Please try again later.`;
+                return `There was a problem linking your account. ${linkingAcc.urlLinkState.message} Please try again later. If that still doesn't work, please contact site admin.`;
               }
               return "";
             })()

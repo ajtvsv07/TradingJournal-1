@@ -10,10 +10,7 @@ import ModalDialog from "./ModalDialog";
 
 export default function DisconnectSuccess({ linkingAcc, updateState }) {
   const classes = modalStyles();
-  const { user, getAccessTokenSilently } = useAuth0();
-
-  // get latest isLinked State from auth0
-  getAccessTokenSilently({ ignoreCache: true });
+  const { user } = useAuth0();
 
   function handleCloseModal() {
     updateState({
@@ -33,7 +30,7 @@ export default function DisconnectSuccess({ linkingAcc, updateState }) {
       open={linkingAcc.isModalOpen}
       close={handleCloseModal}
       title="You've successfully disconnected your account!"
-      status={`Connection Status: ${false}`}
+      status={`Connection Status: ${user["https://tradingjournal/link-account"]}`}
       description={
         <Typography>
           {`${linkingAcc.disconnectStatus.message}. \n

@@ -28,10 +28,6 @@ export default function LinkTdAccount({ linkingAcc, updateState }) {
         },
       });
     } else {
-      console.log(
-        "ACC was NOT linked - trying to connect. Latest linked status",
-        linkingAcc.isTdAccountLinked
-      );
       // account is not linked - trying to connect
       updateState({
         ...linkingAcc,

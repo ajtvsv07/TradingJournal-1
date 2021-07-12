@@ -10,10 +10,7 @@ import ModalDialog from "./ModalDialog";
 
 export default function LinkingInProgress({ linkingAcc, updateState }) {
   const classes = modalStyles();
-  const { user, getAccessTokenSilently } = useAuth0();
-
-  // get latest isLinked State from auth0
-  getAccessTokenSilently({ ignoreCache: true });
+  const { user } = useAuth0();
 
   function handleCloseModal() {
     updateState({

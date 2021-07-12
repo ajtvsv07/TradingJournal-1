@@ -7,7 +7,7 @@ const TdAccessCred = require("../models/tdAccessCred");
 const hashPayload = require("../utils/hashPayload");
 
 const redirectUri = process.env.TDA_REDIRECT_URI;
-const clientId = process.env.TDA_CONSUMER_KEY;
+const clientId = process.env.TDA_CLIENT_ID;
 
 const updateManagementApi = require("../utils/updateManagementApi");
 
@@ -120,7 +120,7 @@ module.exports = {
         if (userDeleted) {
           resolve(`Deleted user creds successfully`);
         } else {
-          reject("No TD Ameritrade connection found");
+          reject("No existing TD Ameritrade connection found");
         }
       });
     });
@@ -144,16 +144,16 @@ module.exports = {
                 });
               })
               .catch((error) => {
-                sendErrorToClient(`Request error ${error}`);
+                sendErrorToClient(`Request error. ${error}`);
               });
           })
           .catch((error) => {
-            sendErrorToClient(`API token error ${error}`);
+            sendErrorToClient(`API token error. ${error}`);
           });
       })
       .catch((error) => {
         sendErrorToClient(
-          `There was a problem in deleting the tokens ${error}`
+          `There was a problem in deleting the tokens. ${error}`
         );
       });
   },

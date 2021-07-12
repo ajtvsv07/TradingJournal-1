@@ -12,11 +12,6 @@ import DisconnectSuccess from "./modals/DisconnectSuccess";
 import LinkingInProgress from "./modals/LinkingInProgress";
 
 export default function LinkAccStatusModal({ linkingAcc, updateState }) {
-  // console.log(
-  //   "LinkAccStatusModal is open?: ",
-  //   linkingAcc.connectStatus.attemptingToLink
-  // );
-
   return (
     <Box>
       {/* conditionally handle which modals to display */}
