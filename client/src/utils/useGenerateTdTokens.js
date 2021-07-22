@@ -50,3 +50,6 @@ function generateTokens(
 }
 
 export default generateTokens;
+
+// TODO: Keep track of the time limit on the refresh token (90 days), and access token (30 min)
+// TODO: exchange token for new version before it expires

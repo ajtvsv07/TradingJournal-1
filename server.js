@@ -34,14 +34,16 @@ app.use(
   })
 );
 
-//Protects all of the routes
+// protects all of the routes
 app.use(jwtCheck);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// include routes
 app.use("/", require("./routes/index"));
 
+// compile build
 app.use(express.static(path.join(__dirname, "/client/public")));
 
 HTTPS.createServer(

@@ -9,7 +9,7 @@ function getAuthLinkDetails() {
     const getClientToken = await getAccessTokenSilently();
 
     const { data } = await axios.get(
-      `${process.env.REACT_APP_EXPRESS_API}/tda/tdaUserAuthLinkDetails`,
+      `${process.env.REACT_APP_EXPRESS_API}/tda/tdUrlDetails`,
       {
         headers: { Authorization: `Bearer ${getClientToken}` },
       }

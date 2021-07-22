@@ -1,3 +1,7 @@
+// stringifies values that are not already strings, and hashes them
+// combining them in object to be handled later
+// currently not in use
+
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 // const payload = require("./jsonSample.json");
@@ -22,6 +26,7 @@ const hashedTokens = (payload) => {
       });
     };
 
+    // place new stringed values in object
     const hashTokens = (value) => {
       return new Promise((resolve, reject) => {
         let hashedTokens = {};
@@ -41,6 +46,7 @@ const hashedTokens = (payload) => {
       });
     };
 
+    // send new stinged valued
     stringifyPayload()
       .then((value) => hashTokens(value))
       .then((result) => resolve(result));

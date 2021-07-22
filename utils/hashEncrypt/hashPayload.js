@@ -1,3 +1,4 @@
+// hash with bcrypt - currently not in use
 const bcrypt = require("bcrypt");
 
 const saltRounds = 10;

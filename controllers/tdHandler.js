@@ -4,12 +4,14 @@ const axios = require("axios");
 
 const getManagementApi = require("../utils/getManagementApi");
 const TdAccessCred = require("../models/tdAccessCred");
-const hashPayload = require("../utils/hashPayload");
+const hashPayload = require("../utils/hashEncrypt/hashPayload");
+const encryptPayload = require("../utils/hashEncrypt/encryptPayload");
 
 const redirectUri = process.env.TDA_REDIRECT_URI;
 const clientId = process.env.TDA_CLIENT_ID;
 
 const updateManagementApi = require("../utils/updateManagementApi");
+const sendErrorToClient = require("../utils/sendErrorToClient");
 
 // joi schema validation
 const schema = Joi.object({
@@ -29,7 +31,8 @@ const schema = Joi.object({
 
 module.exports = {
   // send auth link details to client
-  tdaUserAuthLinkDetails: (req, res, next) => {
+  // used to build url
+  tdUrlDetails: (req, res, next) => {
     res.send({
       success: true,
       message: "Auth link details provided",
@@ -41,25 +44,22 @@ module.exports = {
   },
 
   // Connect TD Ameritrade Account: save access tokens to database and update isTdaLinked status
-  updateAccStatusTokens: (req, res, next) => {
-    // object error helper
-    const sendErrorToClient = (err) => {
-      res.send({
-        success: false,
-        message: err,
-      });
-    };
-
-    // validate incoming payload
+  // 1: Validate
+  // 2: Hash
+  // 3: Save to database
+  // 4: Update status
+  // 5: respond to client
+  connectAccount: (req, res, next) => {
+    // 1
     const { error, value } = schema.validate(req.body);
 
     // handle validation error
     if (error) {
       // console.log("Validation Error: ", error.details[0]);
-      sendErrorToClient(error.details[0].message);
+      sendErrorToClient(res, error.details[0].message);
     } else if (value) {
-      // salt and hash string and object values
-      hashPayload(value).then((hashedPayload) => {
+      // 2
+      encryptPayload(value).then((hashedPayload) => {
         // create new model
         const tdAccessCreds = new TdAccessCred({
           _id: value.userId, // use the unhashed userId as unique db id.
@@ -67,7 +67,7 @@ module.exports = {
           tdTokens: hashedPayload.tdTokens,
         });
 
-        // mongodb save method
+        // 3
         tdAccessCreds.save(function (error, savedTokens) {
           if (savedTokens) {
             // get token to communicate with management api
@@ -77,24 +77,25 @@ module.exports = {
                 const apiToken = response.data;
                 const linked = true;
 
-                // update management API account link status
+                // 4
                 updateManagementApi(userId, apiToken, linked)
                   .then((result) => {
-                    // send confirmation to the client
+                    // 5
                     res.send({
                       success: true,
                       message: "Your account has been successfully linked!",
                     });
                   })
                   .catch((error) => {
-                    sendErrorToClient(`Request error ${error}`);
+                    sendErrorToClient(res, `Request error ${error}`);
                   });
               })
               .catch((error) => {
-                sendErrorToClient(`API token error ${error}`);
+                sendErrorToClient(res, `API token error ${error}`);
               });
           } else {
             sendErrorToClient(
+              res,
               `There was a problem in saving the tokens ${error}`
             );
           }
@@ -104,16 +105,11 @@ module.exports = {
   },
 
   // delete all account data from db, update isTdaLinked status
+  // 1: Find and delete user creds from database
+  // 2: Update status
+  // 3: respond to client
   disconnectAccount: (req, res, next) => {
     const userId = req.body.data.user;
-
-    // object error helper
-    const sendErrorToClient = (err) => {
-      res.send({
-        success: false,
-        message: err,
-      });
-    };
 
     const deleteAccessCreds = new Promise((resolve, reject) => {
       TdAccessCred.findByIdAndDelete(userId, (err, userDeleted) => {
@@ -125,7 +121,7 @@ module.exports = {
       });
     });
 
-    // delete user's post access token credentials
+    // 1
     deleteAccessCreds
       .then((resolved) => {
         // get token to communicate with management api
@@ -134,25 +130,26 @@ module.exports = {
             const apiToken = response.data;
             const linked = false;
 
-            // update management API account link status
+            // 2
             updateManagementApi(userId, apiToken, linked)
               .then((result) => {
-                // send results to the client
+                // 3
                 res.send({
                   success: true,
                   message: "Your account has been disconnected",
                 });
               })
               .catch((error) => {
-                sendErrorToClient(`Request error. ${error}`);
+                sendErrorToClient(res, `Request error. ${error}`);
               });
           })
           .catch((error) => {
-            sendErrorToClient(`API token error. ${error}`);
+            sendErrorToClient(res, `API token error. ${error}`);
           });
       })
       .catch((error) => {
         sendErrorToClient(
+          res,
           `There was a problem in deleting the tokens. ${error}`
         );
       });

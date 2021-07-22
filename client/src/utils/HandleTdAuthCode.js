@@ -63,7 +63,7 @@ export default function HandleAmerAuthCode() {
   );
 
   // save tokens to database
-  const { data: savedTokens, isError: savedTokenError } = useSaveTokens(
+  const { data: savedTokens } = useSaveTokens(
     tdTokens,
     tdTokensLoading,
     tdTokensError,
@@ -99,9 +99,6 @@ export default function HandleAmerAuthCode() {
       }, 1500);
     }
   }, [savedTokens]);
-
-  // TODO: Keep track of the time limit on the refresh token (90 days), and access token (30 min)
-  // TODO: exchange token for new version before it expires
 
   return (
     isAuthenticated && (
