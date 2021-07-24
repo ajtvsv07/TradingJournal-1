@@ -2,6 +2,7 @@
 import axios from "axios";
 import { useQuery } from "react-query";
 import queryString from "query-string";
+import jsonSample from "./jsonSample.json";
 
 function generateTokens(
   linkDetails,
@@ -11,30 +12,34 @@ function generateTokens(
 ) {
   const generateTdTokens = async () => {
     if (linkDetails && !linkDetailsLoading && !linkDetailsError && tdAuthCode) {
-      const { redirectUri, clientId } = linkDetails.payload;
+      // const { redirectUri, clientId } = linkDetails.payload;
 
-      // the dynamic values for this request should all be urldecoded
-      const { data } = await axios
-        .request({
-          url: process.env.REACT_APP_TD_POST_ACCESS_TOKEN,
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          data: queryString.stringify({
-            grant_type: "authorization_code",
-            refresh_token: "",
-            access_type: "offline",
-            code: tdAuthCode, // url decoded
-            client_id: `${clientId}@AMER.OAUTHAP`, // url decoded
-            redirect_uri: redirectUri, // url decoded
-          }),
-        })
-        .catch((error) => {
-          console.log("Error: td token request: ", error);
-          throw new Error("Unable to generate tokens:", error.message);
-        });
+      // // the dynamic values for this request should all be urldecoded
+      // const { data } = await axios
+      //   .request({
+      //     url: process.env.REACT_APP_TD_POST_ACCESS_TOKEN,
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/x-www-form-urlencoded",
+      //     },
+      //     data: queryString.stringify({
+      //       grant_type: "authorization_code",
+      //       refresh_token: "",
+      //       access_type: "offline",
+      //       code: tdAuthCode, // url decoded
+      //       client_id: `${clientId}@AMER.OAUTHAP`, // url decoded
+      //       redirect_uri: redirectUri, // url decoded
+      //     }),
+      //   })
+      //   .catch((error) => {
+      //     console.log("Error: td token request: ", error);
+      //     throw new Error("Unable to generate tokens:", error.message);
+      //   });
 
+      // return data;
+
+      // placeholder
+      const data = jsonSample;
       return data;
     }
     throw new Error(

@@ -6,12 +6,8 @@ const TdAccess = new mongoose.Schema({
     type: String,
     required: true,
   },
-  tdAuthCode: {
+  encryptedTokens: {
     type: String,
-    required: true,
-  },
-  tdTokens: {
-    type: Object,
     required: true,
   },
 });

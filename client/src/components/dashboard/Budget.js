@@ -41,7 +41,8 @@ const Budget = (props) => {
 
   useEffect(() => {
     if (!isLoading && !isError) {
-      setTknVal(tokens.data.tdTokens);
+      console.log(tokens.data);
+      setTknVal(tokens.data);
     }
   }, [tokens]);
 

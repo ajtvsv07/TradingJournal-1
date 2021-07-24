@@ -19,7 +19,7 @@ router.post("/account/updateUserDetails", authenticated.updateUserDetails);
 // Connect TD Ameritrade Account: save tda tokens to database and update management API isTdaLinked status
 router.post("/tda/connectAccount", tdaHandler.connectAccount);
 
-// retrieve td tokens and their expiration
+// TODO: retrieve td tokens and their expiration
 router.post("/tda/tdAccessTokens", tdAmResources.retrieveTdTokens);
 
 // delete all account data from db, update isTdaLinked status

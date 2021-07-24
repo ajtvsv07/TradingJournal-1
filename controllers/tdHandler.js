@@ -4,7 +4,7 @@ const axios = require("axios");
 
 const getManagementApi = require("../utils/getManagementApi");
 const TdAccessCred = require("../models/tdAccessCred");
-const hashPayload = require("../utils/hashEncrypt/hashPayload");
+const hashPayload = require("../utils/hashEncrypt/hashPayload"); // OLD
 const encryptPayload = require("../utils/hashEncrypt/encryptPayload");
 
 const redirectUri = process.env.TDA_REDIRECT_URI;
@@ -43,7 +43,7 @@ module.exports = {
     });
   },
 
-  // Connect TD Ameritrade Account: save access tokens to database and update isTdaLinked status
+  // connect TD Ameritrade Account: save access tokens to database and update isTdaLinked status
   // 1: Validate
   // 2: Hash
   // 3: Save to database
@@ -59,12 +59,11 @@ module.exports = {
       sendErrorToClient(res, error.details[0].message);
     } else if (value) {
       // 2
-      encryptPayload(value).then((hashedPayload) => {
+      encryptPayload(value).then((encryptedPayload) => {
         // create new model
         const tdAccessCreds = new TdAccessCred({
           _id: value.userId, // use the unhashed userId as unique db id.
-          tdAuthCode: hashedPayload.tdAuthCode,
-          tdTokens: hashedPayload.tdTokens,
+          encryptedTokens: encryptedPayload,
         });
 
         // 3
