@@ -29,7 +29,7 @@ export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
     });
   }
 
-  const { isLoading, isError, mutateAsync } = useMutation((id) =>
+  const { isLoading, isError, mutateAsync, error } = useMutation((id) =>
     getAccessTokenSilently().then(async (clientToken) => {
       const { data } = await axios.post(
         `${process.env.REACT_APP_EXPRESS_API}/tda/disconnectAccount`,
@@ -48,48 +48,42 @@ export default function AttemptingToDisconnect({ linkingAcc, updateState }) {
 
   async function disconnectAccount() {
     setIsDisconnectingProgress(true);
-    mutateAsync(userId)
-      .then((result) => {
-        if (!isLoading && !isError) {
-          // get the latest isLinked state
-          if (result.success) {
-            setIsDisconnectingProgress(false);
-            // display success message in new modal
-            getAccessTokenSilently({ ignoreCache: true }).then(() => {
-              updateState({
-                ...linkingAcc,
-                isTdAccountLinked: user["https://tradingjournal/link-account"],
-                disconnectStatus: {
-                  ...linkingAcc.disconnectStatus,
-                  attemptingToDisconnect: false,
-                  success: true,
-                  message: result.message,
-                },
-              });
+    mutateAsync(userId).then((result) => {
+      if (!isLoading && !isError) {
+        // get the latest isLinked state
+        if (result.success) {
+          setIsDisconnectingProgress(false);
+          // display success message in new modal
+          getAccessTokenSilently({ ignoreCache: true }).then(() => {
+            updateState({
+              ...linkingAcc,
+              isTdAccountLinked: user["https://tradingjournal/link-account"],
+              disconnectStatus: {
+                ...linkingAcc.disconnectStatus,
+                attemptingToDisconnect: false,
+                success: true,
+                message: result.message,
+              },
             });
-          } else {
-            setIsDisconnectingProgress(false);
-            // display error in new modal
-            getAccessTokenSilently({ ignoreCache: true }).then(() => {
-              updateState({
-                ...linkingAcc,
-                isTdAccountLinked: user["https://tradingjournal/link-account"],
-                disconnectStatus: {
-                  ...linkingAcc.disconnectStatus,
-                  attemptingToDisconnect: false,
-                  error: true,
-                  message: result.message,
-                },
-              });
+          });
+        } else {
+          // display error in new modal
+          setIsDisconnectingProgress(false);
+          getAccessTokenSilently({ ignoreCache: true }).then(() => {
+            updateState({
+              ...linkingAcc,
+              isTdAccountLinked: user["https://tradingjournal/link-account"],
+              disconnectStatus: {
+                ...linkingAcc.disconnectStatus,
+                attemptingToDisconnect: false,
+                error: true,
+                message: result.message,
+              },
             });
-          }
+          });
         }
-      })
-      .catch((error) => {
-        throw new Error(
-          `There was a network connection error: ${error}. Please try again later.`
-        );
-      });
+      }
+    });
   }
 
   return (

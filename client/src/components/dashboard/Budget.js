@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useQuery } from "react-query";
-import { useAuth0 } from "@auth0/auth0-react";
 
 import { Card } from "@material-ui/core";
 import Table from "@material-ui/core/Table";
@@ -12,36 +9,16 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 
+import { getAccessTokens, tknDataValues } from "../../helpers/getAccessTokens";
+
 const Budget = (props) => {
-  const { user, getAccessTokenSilently } = useAuth0();
   const [tknVal, setTknVal] = useState("");
 
-  async function getTokens() {
-    const getClientToken = await getAccessTokenSilently();
-    const { data } = await axios.post(
-      `${process.env.REACT_APP_EXPRESS_API}/tda/tdAccessTokens`,
-      {
-        userId: user.sub,
-      },
-      {
-        headers: { Authorization: `Bearer ${getClientToken}` },
-      }
-    );
-    if (!data.success) {
-      throw new Error("Unable to generate tokens:", data.error.message);
-    }
-    return data;
-  }
-
-  const {
-    data: tokens,
-    isLoading,
-    isError,
-  } = useQuery("generatedTdTokens", () => getTokens());
+  const { data: tokens, isLoading, isError } = getAccessTokens();
 
   useEffect(() => {
     if (!isLoading && !isError) {
-      console.log(tokens.data);
+      // console.log(tokens.data);
       setTknVal(tokens.data);
     }
   }, [tokens]);
@@ -51,19 +28,22 @@ const Budget = (props) => {
     return { token, expires, willRefresh };
   }
 
+  // TODO: verify these data values are coming in accurately
   // incoming token values
-  const refreshToken = `TKN: ${tknVal.refresh_token}`;
-  const refreshTokenExpireson = `EXP: ${tknVal.refresh_token_expires_in}`;
-  const refreshTokenWillRefreshOn = "RFSH:";
-  const accessToken = `TKN: ${tknVal.access_token}`;
-  const accessTokenExpireson = `EXP: ${tknVal.expires_in}`;
-  const accessTokenWillRefreshOn = "RFSH:";
+  const {
+    refreshToken,
+    refreshTokenExpiresIn,
+    refreshTokenWillRefreshIn,
+    accessToken,
+    accessTokenExpiresIn,
+    accessTokenWillRefreshIn,
+  } = tknDataValues(); // TODO: pass in params
 
   // aggregate all table data
   const rows = [
     createData(refreshToken, accessToken),
-    createData(refreshTokenExpireson, accessTokenExpireson),
-    createData(refreshTokenWillRefreshOn, accessTokenWillRefreshOn),
+    createData(refreshTokenExpiresIn, accessTokenExpiresIn),
+    createData(refreshTokenWillRefreshIn, accessTokenWillRefreshIn),
   ];
 
   return (

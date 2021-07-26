@@ -10,9 +10,9 @@ import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import useGetAuthLinkDetails from "./useGetAuthLinkDetails";
-import useGenerateTdTokens from "./useGenerateTdTokens";
-import useSaveTokens from "./useSaveTokens";
+import useGetAuthLinkDetails from "../hooks/useGetAuthLinkDetails";
+import useGenerateTdTokens from "../hooks/useGenerateTdTokens";
+import useSaveTokens from "../hooks/useSaveTokens";
 
 // custom styles
 const useStyles = makeStyles(() => ({
@@ -85,7 +85,6 @@ export default function HandleAmerAuthCode() {
         });
       }, 1500);
     } else if (savedTokens && !savedTokens.success) {
-      console.log("Logging all of savedTokens: ", savedTokens);
       // handle failure response
       setState({
         ...state,

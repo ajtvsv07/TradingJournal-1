@@ -58,7 +58,7 @@ const AccountProfileDetails = () => {
     getAccessTokenSilently().then((token) => {
       axios
         .post(
-          `${process.env.REACT_APP_EXPRESS_API}/account/updateUserDetails`,
+          `${process.env.REACT_APP_EXPRESS_API}/account/profileDetails`,
           {
             data: {
               ...userDetails,
