@@ -4,9 +4,6 @@ const getManagementApi = require("../utils/getManagementApi");
 const updateManagementApi = require("../utils/updateManagementApi");
 
 // delete all account data from db, update isTdaLinked status
-// 1: Find and delete user creds from database
-// 2: Update status
-// 3: respond to client
 const disconnectAccount = (req, res, next) => {
   const userId = req.body.data.user;
 
@@ -20,7 +17,7 @@ const disconnectAccount = (req, res, next) => {
     });
   });
 
-  // 1
+  // 1: Find and delete user creds from database
   deleteAccessCreds
     .then((resolved) => {
       // get token to communicate with management api
@@ -29,10 +26,10 @@ const disconnectAccount = (req, res, next) => {
           const apiToken = response.data;
           const linked = false;
 
-          // 2
+          // 2: Update status
           updateManagementApi(userId, apiToken, linked)
             .then((result) => {
-              // 3
+              // 3: respond to client
               res.send({
                 success: true,
                 message: "Your account has been disconnected",

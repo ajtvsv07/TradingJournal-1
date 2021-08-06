@@ -2,7 +2,7 @@
 import axios from "axios";
 import { useQuery } from "react-query";
 import queryString from "query-string";
-// import jsonSample from "./jsonSample.json";
+// import jsonSample from "../utils/jsonSample.json";
 
 function generateTokens(
   linkDetails,

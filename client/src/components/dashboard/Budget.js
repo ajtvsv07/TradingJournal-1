@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { Card } from "@material-ui/core";
 import Table from "@material-ui/core/Table";
@@ -9,41 +10,50 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 
-import { getAccessTokens, tknDataValues } from "../../helpers/getAccessTokens";
+import useGetAuthLinkDetails from "../../hooks/useGetAuthLinkDetails";
+import testTokens from "../../helpers/testTokens";
 
 const Budget = (props) => {
-  const [tknVal, setTknVal] = useState("");
+  const { user, getAccessTokenSilently } = useAuth0();
 
-  const { data: tokens, isLoading, isError } = getAccessTokens();
+  const [tokenValues, setTokenValues] = useState({
+    rfTkn: null,
+    rfTknExpIn: null,
+    rfTknWillRefreshIn: null,
+    accssTkn: null,
+    accssTknExpIn: null,
+    accssTknWillRefreshIn: null,
+  });
 
-  useEffect(() => {
-    if (!isLoading && !isError) {
-      // console.log(tokens.data);
-      setTknVal(tokens.data);
-    }
-  }, [tokens]);
-
-  // group row data in object
-  function createData(token, expires, willRefresh) {
-    return { token, expires, willRefresh };
-  }
-
-  // TODO: verify these data values are coming in accurately
-  // incoming token values
+  // fetch authlink details
   const {
-    refreshToken,
-    refreshTokenExpiresIn,
-    refreshTokenWillRefreshIn,
-    accessToken,
-    accessTokenExpiresIn,
-    accessTokenWillRefreshIn,
-  } = tknDataValues(); // TODO: pass in params
+    data: linkDetails,
+    isLoading: linkDetailsLoading,
+    isError: linkDetailsError,
+  } = useGetAuthLinkDetails();
 
-  // aggregate all table data
+  // set data values
+  useEffect(() => {
+    if (!linkDetailsLoading && !linkDetailsError) {
+      const tkns = testTokens(user, getAccessTokenSilently, linkDetails);
+      tkns.then((result) => {
+        setTokenValues(result);
+      });
+    }
+  }, [user, getAccessTokenSilently, linkDetails]);
+
+  // table data
   const rows = [
-    createData(refreshToken, accessToken),
-    createData(refreshTokenExpiresIn, accessTokenExpiresIn),
-    createData(refreshTokenWillRefreshIn, accessTokenWillRefreshIn),
+    {
+      token: tokenValues.accssTkn,
+      expiresIn: tokenValues.accssTknExpIn,
+      willRefreshIn: tokenValues.accssTknWillRefreshIn,
+    },
+    {
+      token: tokenValues.rfTkn,
+      expiresIn: tokenValues.rfTknExpIn,
+      willRefreshIn: tokenValues.rfTknWillRefreshIn,
+    },
   ];
 
   return (
@@ -52,27 +62,34 @@ const Budget = (props) => {
         <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
           <TableHead>
             <TableRow>
-              <TableCell>Refresh Token</TableCell>
-              <TableCell>Access Token</TableCell>
+              <TableCell>Tokens</TableCell>
+              <TableCell>Valid For</TableCell>
+              <TableCell>Will Refresh In</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow
-                key={row.token}
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell component="th" scope="row">
-                  {row.token}
-                </TableCell>
-                <TableCell component="th" scope="row">
-                  {row.expires}
-                </TableCell>
-                <TableCell component="th" scope="row">
-                  {row.willRefresh}
-                </TableCell>
+            {tokenValues.rfTkn ? (
+              rows.map((row) => (
+                <TableRow
+                  key={row.token}
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  <TableCell component="th" scope="row">
+                    {row.token}
+                  </TableCell>
+                  <TableCell component="th" scope="row">
+                    {row.expiresIn}
+                  </TableCell>
+                  <TableCell component="th" scope="row">
+                    {row.willRefreshIn}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell>null</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>

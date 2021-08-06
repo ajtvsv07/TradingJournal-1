@@ -4,5 +4,6 @@
   "token_type": "someTokenType",
   "expires_in": 2300,
   "scope": "some_scope another_scope",
-  "refresh_token_expires_in": 2300
+  "refresh_token_expires_in": 2300,
+  "createdOn": 1628208335812
 }

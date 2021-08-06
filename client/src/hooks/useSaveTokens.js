@@ -27,7 +27,7 @@ function saveTokens(tdTokens, tdTokensLoading, tdTokensError, tdAuthCode) {
       // handle specific errors (eventhough req 200) with react-error-boundary
       if (!data.success) {
         console.log("Incoming error: ", data);
-        return new Error(
+        throw new Error(
           "You may be trying to connect an account that already exists or have encountered a connection issue."
         );
       }

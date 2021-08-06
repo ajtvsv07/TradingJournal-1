@@ -5,14 +5,14 @@ const decryptPayload = require("../../utils/hashEncrypt/decryptPayload");
 // retrieve td tokens and their expiration
 const retrieveTdTokens = async (req, res, next) => {
   const userId = req.body.userId;
-  const tokens = await TdAccessCred.findById(userId, "encryptedTokens").exec();
+  const tokens = await TdAccessCred.findById(userId, "tdTokens").exec();
 
-  if (tokens) {
+  if (tokens.tdTokens) {
     // decrypt tokens
-    decryptPayload(tokens).then((decryptedPayload) => {
+    decryptPayload(tokens.tdTokens).then((decryptedPayload) => {
       res.send({
         success: true,
-        data: decryptedPayload,
+        tokens: decryptedPayload,
         message: "Successfully retrieved tokens.",
       });
     });
